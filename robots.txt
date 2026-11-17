@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://vlabjo.com/sitemap.xml
+Sitemap: https://www.vlabjo.com/sitemap.xml
