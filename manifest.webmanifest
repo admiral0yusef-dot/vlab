@@ -1,0 +1,19 @@
+{
+  "name": "المختبر الافتراضي للعلوم VLab",
+  "short_name": "VLab",
+  "description": "629 تجربة ومحاكاة تفاعلية للمنهاج الأردني من الصف الأول إلى التوجيهي",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1020",
+  "theme_color": "#4f46e5",
+  "categories": ["education"],
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}
