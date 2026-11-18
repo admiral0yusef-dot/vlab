@@ -1730,8 +1730,10 @@ function Q2thermo(x,y,h,f,lab){Qrr(x-9,y-6,18,h+30,9,'rgba(15,23,42,.85)','rgba(
   const pos=(p,i,d)=>{const n=2*Math.PI/p[4],Mm=M0[i]+n*d,E=kepler(Mm,p[2]),a=rmap(p[1]),x=a*(Math.cos(E)-p[2]),z=a*Math.sqrt(1-p[2]*p[2])*Math.sin(E),inc=p[3]*Math.PI/180;return[x,z*Math.sin(inc)*.9,z*Math.cos(inc)]};
   if(v.o>=1)list.forEach((p,i)=>{cx.strokeStyle='rgba(148,163,184,.28)';cx.lineWidth=1;cx.beginPath();for(let k=0;k<=96;k++){const E=k/96*6.2832,a=rmap(p[1]),x=a*(Math.cos(E)-p[2]),z=a*Math.sqrt(1-p[2]*p[2])*Math.sin(E),inc=p[3]*Math.PI/180,q=P(x,z*Math.sin(inc)*.9,z*Math.cos(inc));k?cx.lineTo(q[0],q[1]):cx.moveTo(q[0],q[1])}cx.stroke()});
   const s0=P(0,0,0);items.push({z:s0[2],f:()=>{const g=cx.createRadialGradient(s0[0],s0[1],2,s0[0],s0[1],s0[3]*.55);g.addColorStop(0,'rgba(255,251,235,1)');g.addColorStop(.25,'rgba(253,224,71,.9)');g.addColorStop(1,'rgba(249,115,22,0)');cx.fillStyle=g;cx.beginPath();cx.arc(s0[0],s0[1],s0[3]*.55,0,7);cx.fill();Q3.ball(s0[0],s0[1],Math.max(8,.17*s0[3]),'#fbbf24')}});
-  list.forEach((p,i)=>{const q=pos(p,i,day),pr=P(q[0],q[1],q[2]),r=Math.max(2.4,p[6]*.075*pr[3]*(inner?.8:1.15));items.push({z:pr[2],f:()=>{if(p[0]==='زحل'){cx.strokeStyle='rgba(233,216,166,.7)';cx.lineWidth=Math.max(1,r*.35);cx.beginPath();cx.ellipse(pr[0],pr[1],r*2.2,r*.7,-.25,0,7);cx.stroke()}Q3.ball(pr[0],pr[1],r,p[5]);QT(p[0],pr[0],pr[1]-r-8,'#e2e8f0',9.5)}})});
+  const LB=[];list.forEach((p,i)=>{const q=pos(p,i,day),pr=P(q[0],q[1],q[2]),r=Math.max(4.6,p[6]*.085*pr[3]*(inner?.8:1.15));LB.push([p[0],pr[0],pr[1],r,p[5]]);items.push({z:pr[2],f:()=>{if(window.YQART&&YQART.planet)YQART.planet(cx,pr[0],pr[1],r,p[0],t);else Q3.ball(pr[0],pr[1],r,p[5])}})});
   items.sort((a,b)=>b.z-a.z).forEach(it=>it.f());
+  {const box=[[s0[0]-22,s0[1]-22,44,44]],hit=(x,y,w,h)=>box.some(b=>x<b[0]+b[2]&&x+w>b[0]&&y<b[1]+b[3]&&y+h>b[1]);cx.save();cx.font='700 11px Cairo,Tajawal,Tahoma,sans-serif';
+   LB.forEach(l=>{const w=cx.measureText(l[0]).width+14,h=19,c=[[0,-l[3]-13],[0,l[3]+13],[w/2+l[3]+4,0],[-w/2-l[3]-4,0],[0,-l[3]-32],[0,l[3]+32]];for(const o of c){const x=l[1]+o[0],y=l[2]+o[1];if(!hit(x-w/2,y-h/2,w,h)&&x-w/2>2&&x+w/2<448){box.push([x-w/2,y-h/2,w,h]);if(Math.abs(o[1])>l[3]+20||Math.abs(o[0])>0){cx.strokeStyle='rgba(203,213,225,.45)';cx.lineWidth=1;cx.beginPath();cx.moveTo(l[1],l[2]);cx.lineTo(x,y);cx.stroke()}if(window.YQART&&YQART.tag)YQART.tag(cx,l[0],x,y,{fs:11,bd:l[4]+'aa'});else QT(l[0],x,y,'#e2e8f0',9.5);break}}});cx.restore()}
   const yrs=day/365.26;Qpanel(452,22,178,230,'قانون كبلر الثالث: T² ∝ a³');QT('الكوكب',616,52,'#94a3b8',9,'right');QT('a (AU)',548,52,'#94a3b8',9);QT('T (يوم)',498,52,'#94a3b8',9);QT('T²/a³',466,52,'#94a3b8',9);
   list.forEach((p,i)=>{const y=70+i*(inner?22:21);QT(p[0],616,y,p[5],9.5,'right');QT(String(p[1]),548,y,'#e2e8f0',9.5);QT(p[4]>=1e4?(p[4]/1000).toFixed(1)+'k':String(Math.round(p[4])),498,y,'#e2e8f0',9.5);QT(((p[4]/365.26)**2/p[1]**3).toFixed(2),466,y,'#86efac',9.5)});
   Qpanel(452,260,178,48,null);QT('اليوم '+Math.floor(day).toLocaleString('en-US')+' · '+yrs.toFixed(2)+' سنة أرضية',541,276,'#fde047',10.5);QT(inner?'المسافات بمقياس حقيقي':'المسافات مضغوطة لتظهر كل الكواكب',541,295,'#94a3b8',9);
@@ -3464,6 +3466,69 @@ Qemo=(function(prev){const A=()=>window.YQART;const T=()=>performance.now()/1000
   '🌾':(x,y,z)=>{for(let i=-1;i<=1;i++)A().wheat(cx,x+i*z*.18,y+z*.55,z*1.1,T())},'🐿':(x,y,z)=>A().squirrel(cx,x,y+z*.35,z/34,T()),
   '🦎':(x,y,z)=>A().lizard(cx,x,y,z/40,T()),'🪱':(x,y,z)=>A().worm(cx,x,y,z/40,T()),'⚽':(x,y,z)=>A().soccer(cx,x,y,z*.42,T())};
  return function(e,x,y,z){z=z||28;const k=String(e).replace(/[️]/g,'');const f=window.YQART&&window.YQART.bird&&M[k];if(f){try{cx.save();cx.shadowBlur=0;cx.shadowOffsetY=0;f(x,y,z);cx.restore();return}catch(err){cx.restore()}}return prev(e,x,y,z)}})(Qemo);
+/* ===== خلفية فضائية لتجارب الفضاء، واستوديو جيولوجي لتجارب علوم الأرض ===== */
+(function(){const A=window.YQART;if(!A||A.__bgWrap||!A.labScene)return;A.__bgWrap=1;const L=A.labScene;
+ const SP=new Set(['x3_solar','s2_galaxy','c_starcolor','c_stars','c_magnitude','c_starlife','c_telescope','moon','c_earthmotion','c_universe']);
+ const EA=new Set(['c_plates','g12_fault','g12_spread','quake','layers','g12_stress','g12_geomap','g12_relative','g12_absolute','c_geotime','g12_jordan']);
+ A.labScene=function(c,W,H,o){let t=null;try{t=(c&&c.canvas&&c.canvas.id==='cv'&&cur)?cur[3]:null}catch(e){}
+  if(t&&SP.has(t)&&A.spaceScene)return A.spaceScene(c,W,H,o);if(t&&EA.has(t)&&A.geoScene)return A.geoScene(c,W,H,o);return L.apply(this,arguments)}})();
+(function(){const B=window.__yqBg,A=window.YQART;if(!B||!A||window.__yqBgWrap)return;window.__yqBgWrap=1;
+ window.__yqBg=function(c,W,H,a,b){let t=null;try{t=(c&&c.canvas&&c.canvas.id==='cv'&&cur)?cur[3]:null}catch(e){}
+  if(t&&A.labScene&&A.__bgWrap){const sp=['x3_solar','s2_galaxy','c_starcolor','c_stars','c_magnitude','c_starlife','c_telescope','moon','c_earthmotion','c_universe'],ea=['c_plates','g12_fault','g12_spread','quake','layers','g12_stress','g12_geomap','g12_relative','g12_absolute','c_geotime','g12_jordan'];
+   if(sp.indexOf(t)>=0){c.save();c.shadowBlur=0;A.spaceScene(c,W,H,{dpr:2});c.restore();return}if(ea.indexOf(t)>=0){c.save();c.shadowBlur=0;A.geoScene(c,W,H,{dpr:2});c.restore();return}}
+  return B.apply(this,arguments)}})();
+/* ===== حركة الصفائح التكتونية: مقطع عرضي واقعي (الأستاذ يوسف القاق) ===== */
+(function(){if(typeof S==='undefined'||!S.c_plates||!window.YQART)return;const A=YQART,PT={};
+ function pat(name){if(PT[name])return PT[name];const c=document.createElement('canvas');c.width=c.height=120;const g=c.getContext('2d');g.__noMat=1;const r=A.rng(name.length*13+5);
+  const P={cont:['#8b6b4a','#6d533a','#a3825c'],ocean:['#3f3f46','#27272a','#52525b'],mantle:['#9a3412','#7c2d12','#c2410c'],sed:['#b59a6c','#9c8156','#cdb488']}[name];
+  g.fillStyle=P[0];g.fillRect(0,0,120,120);for(let i=0;i<260;i++){g.fillStyle=P[1+(i%2)];g.globalAlpha=.25+r()*.4;g.beginPath();g.ellipse(r()*120,r()*120,1+r()*3,.6+r()*2,r()*3,0,6.283);g.fill()}g.globalAlpha=1;
+  if(name!=='mantle'){g.strokeStyle='rgba(0,0,0,.18)';for(let y=8;y<120;y+=14){g.beginPath();for(let x=0;x<=120;x+=10)g.lineTo(x,y+Math.sin(x*.08+y)*2);g.stroke()}}
+  return PT[name]=cx.createPattern(c,'repeat')}
+ function poly(pts,fill,stroke){cx.beginPath();pts.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.closePath();cx.fillStyle=fill;cx.fill();if(stroke){cx.strokeStyle=stroke;cx.lineWidth=1.2;cx.stroke()}}
+ function shade(pts,top,bot){cx.save();cx.beginPath();pts.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.closePath();cx.clip();const g=cx.createLinearGradient(0,top,0,bot);g.addColorStop(0,'rgba(255,255,255,.18)');g.addColorStop(.25,'rgba(255,255,255,0)');g.addColorStop(1,'rgba(0,0,0,.35)');cx.fillStyle=g;cx.fillRect(0,top-5,W,bot-top+10);cx.restore()}
+ function sky(){const g=cx.createLinearGradient(0,0,0,130);g.addColorStop(0,'#3b78b5');g.addColorStop(1,'#bcd9ee');cx.fillStyle=g;cx.fillRect(0,0,W,130)}
+ function mantle(t){const g=cx.createLinearGradient(0,170,0,H);g.addColorStop(0,'#f97316');g.addColorStop(.35,'#c2410c');g.addColorStop(1,'#7c2d12');cx.fillStyle=g;cx.fillRect(0,165,W,H-165);cx.save();cx.globalAlpha=.35;cx.fillStyle=pat('mantle');cx.fillRect(0,165,W,H-165);cx.restore();
+  const gl=cx.createLinearGradient(0,165,0,200);gl.addColorStop(0,'rgba(255,200,120,.55)');gl.addColorStop(1,'rgba(255,200,120,0)');cx.fillStyle=gl;cx.fillRect(0,165,W,35)}
+ function cells(t,list){cx.save();cx.strokeStyle='rgba(255,230,170,.75)';cx.lineWidth=2;cx.setLineDash([7,9]);cx.lineDashOffset=-t*28;list.forEach(([x0,dir])=>{cx.beginPath();cx.ellipse(x0,262,95,44,0,0,6.283,dir<0);cx.stroke()});cx.setLineDash([]);cx.restore()}
+ function water(x0,x1,top,bot,t){const g=cx.createLinearGradient(0,top,0,bot);g.addColorStop(0,'rgba(56,160,214,.92)');g.addColorStop(1,'rgba(12,58,110,.95)');cx.fillStyle=g;cx.beginPath();cx.moveTo(x0,top);for(let x=x0;x<=x1;x+=8)cx.lineTo(x,top+Math.sin(x*.07+t*2.4)*1.6);cx.lineTo(x1,bot);cx.lineTo(x0,bot);cx.closePath();cx.fill();cx.strokeStyle='rgba(255,255,255,.65)';cx.lineWidth=1.2;cx.beginPath();for(let x=x0;x<=x1;x+=8)cx.lineTo(x,top+Math.sin(x*.07+t*2.4)*1.6);cx.stroke()}
+ function plateArrow(x1,x2,y){Qarrow(x1,y,x2,y,'#fde047',4)}
+ function mountains(x0,x1,base,h,seed,snow){const r=A.rng(seed),pts=[[x0,base]];const n=Math.max(6,Math.round((x1-x0)/15));for(let i=1;i<n;i++){const f=i/n,hh=h*Math.pow(Math.sin(f*Math.PI),1.2)*(i%2?.78+r()*.12:.92+r()*.12);pts.push([x0+f*(x1-x0)+(r()-.5)*4,base-hh])}pts.push([x1,base]);
+  const g=cx.createLinearGradient(0,base-h,0,base);g.addColorStop(0,'#8a8f98');g.addColorStop(.5,'#6b5a45');g.addColorStop(1,'#4d6b3a');poly(pts,g);shade(pts,base-h,base);
+  if(snow&&h>25){cx.save();cx.beginPath();pts.forEach((p,i)=>i?cx.lineTo(p[0],p[1]):cx.moveTo(p[0],p[1]));cx.closePath();cx.clip();cx.fillStyle='rgba(248,250,252,.92)';cx.fillRect(x0,base-h-5,x1-x0,h*.28);cx.restore()}
+  cx.strokeStyle='rgba(0,0,0,.25)';cx.lineWidth=1;for(let i=1;i<pts.length-1;i++){cx.beginPath();cx.moveTo(pts[i][0],pts[i][1]);cx.lineTo(pts[i][0]+(i%2?6:-6),base);cx.stroke()}}
+ function volcano(x,base,h,t,erupt){const pts=[[x-55,base],[x-8,base-h],[x+8,base-h],[x+55,base]];const g=cx.createLinearGradient(0,base-h,0,base);g.addColorStop(0,'#57534e');g.addColorStop(1,'#3f6b2f');poly(pts,g);shade(pts,base-h,base);
+  if(erupt){cx.save();cx.globalCompositeOperation='lighter';for(let i=0;i<3;i++){cx.strokeStyle=['rgba(249,115,22,.9)','rgba(250,204,21,.8)','rgba(239,68,68,.7)'][i];cx.lineWidth=3-i*.6;cx.beginPath();cx.moveTo(x+(i-1)*4,base-h);cx.quadraticCurveTo(x+(i-1)*14,base-h*.6,x+(i-1)*26,base-h*.15);cx.stroke()}cx.restore();
+   for(let i=0;i<7;i++){const ph=(t*.35+i/7)%1,px=x+Math.sin(i*2.3)*10+ph*30,py=base-h-ph*70,r=6+ph*16;cx.fillStyle=`rgba(80,80,90,${.55*(1-ph)})`;cx.beginPath();cx.arc(px,py,r,0,6.283);cx.fill()}A.flame&&A.flame(cx,x,base-h+2,18,t)}}
+ function tagT(s,x,y,o){A.tag(cx,s,x,y,Object.assign({fs:11},o||{}))}
+ S.c_plates.f=function(v,t){const s=v.y*3;cx.save();cx.shadowBlur=0;A.geoScene(cx,W,H,{dpr:2});sky();mantle(t);
+  if(v.k===0){water(0,W,72,150,t);cells(t,[[220,1],[420,-1]]);const gap=8+s*.8,L=[[0,150],[320-gap,150],[320-gap,142],[300-gap,140],[0,150]];
+   const lp=[[0,150],[W/2-gap,138],[W/2-gap,190],[0,195]],rp=[[W/2+gap,138],[W,150],[W,195],[W/2+gap,190]];
+   [lp,rp].forEach(p=>{poly(p,pat('ocean'));shade(p,138,195)});
+   cx.save();for(let i=0;i<6;i++){const w=8+s*.12;[-1,1].forEach(d=>{cx.fillStyle=i%2?'rgba(239,68,68,.35)':'rgba(59,130,246,.35)';cx.fillRect(W/2+d*(gap+i*w)-(d<0?w:0),140,w,48)})}cx.restore();
+   const mg=cx.createLinearGradient(0,140,0,250);mg.addColorStop(0,'#fde68a');mg.addColorStop(.3,'#f97316');mg.addColorStop(1,'rgba(194,65,12,.2)');cx.fillStyle=mg;cx.beginPath();cx.moveTo(W/2-gap,140);cx.lineTo(W/2+gap,140);cx.lineTo(W/2+gap+30,250);cx.lineTo(W/2-gap-30,250);cx.closePath();cx.fill();
+   for(let i=0;i<6;i++){const ph=(t*.5+i/6)%1;cx.fillStyle=`rgba(255,220,150,${1-ph})`;cx.beginPath();cx.arc(W/2+Math.sin(i*3+t)*gap*.6,240-ph*95,2.4,0,6.283);cx.fill()}
+   plateArrow(250-s,170-s,120);plateArrow(390+s,470+s,120);tagT('ظهرة وسط محيطية',W/2,58);tagT('قشرة محيطية جديدة',W/2,215,{bg:'rgba(80,20,5,.75)'});tagT('تيارات الحمل في الوشاح',110,292,{bg:'rgba(80,20,5,.75)'})}
+  else if(v.k===1){const jx=330;water(0,jx+10,92,150,t);cells(t,[[200,1],[470,-1]]);
+   const dip=[[0,150],[jx-30+s*.0,150],[jx+10,158],[jx+140,250],[jx+120,275],[jx-10,190],[0,192]];poly(dip,pat('ocean'));shade(dip,150,275);
+   cx.fillStyle='rgba(12,40,80,.95)';cx.beginPath();cx.moveTo(jx-40,150);cx.lineTo(jx+4,172);cx.lineTo(jx+22,150);cx.closePath();cx.fill();
+   const cont=[[jx+6,128],[W,124],[W,200],[jx+70,205],[jx+20,170]];poly(cont,pat('cont'));shade(cont,124,205);
+   mountains(jx+150,W,126,26+s*.8,4,true);volcano(jx+95,128,40+Math.min(s,30)*1.2,t,s>10);
+   for(let i=0;i<5;i++){const ph=(t*.3+i/5)%1,bx=jx+120-ph*20,by=240-ph*100;cx.fillStyle=`rgba(253,186,116,${.9-ph*.6})`;cx.beginPath();cx.ellipse(bx,by,4,6,0,0,6.283);cx.fill()}
+   plateArrow(120,200,118);tagT('خندق محيطي',jx-10,185,{bg:'rgba(8,30,60,.85)'});tagT('اندساس الصفيحة المحيطية',jx+150,262,{bg:'rgba(80,20,5,.75)'});tagT('بركان نشط',jx+20,128-40-Math.min(s,30)*1.2+4);tagT('صفيحة محيطية',110,170,{bg:'rgba(30,30,35,.8)'});tagT('صفيحة قارية',jx+200,170,{bg:'rgba(70,50,30,.85)'})}
+  else if(v.k===2){cells(t,[[170,1],[470,-1]]);const c0=W/2,h=18+Math.min(s,30)*2.5,sh=Math.min(40,s*1.5);
+   const root=[[c0-80,195],[c0,212+h*.4],[c0+80,195]];poly(root,pat('cont'));shade(root,195,212+h*.4);const lp=[[0,128],[c0+2,128],[c0+2,205],[0,200]],rp=[[c0-2,128],[W,128],[W,200],[c0-2,205]];poly(lp,pat('cont'));shade(lp,128,205);poly(rp,pat('sed'));shade(rp,128,205);cx.strokeStyle='rgba(30,15,5,.6)';cx.lineWidth=2;cx.beginPath();cx.moveTo(c0,130);for(let y=130;y<205;y+=8)cx.lineTo(c0+Math.sin(y*.4)*4,y);cx.stroke();
+   mountains(c0-120,c0+120,130,h,7,true);mountains(20,150,128,14,9,false);mountains(500,630,128,12,11,false);
+   cx.strokeStyle='rgba(60,40,20,.5)';cx.lineWidth=1.4;for(let i=0;i<5;i++){cx.beginPath();cx.moveTo(c0-60,140+i*12);cx.bezierCurveTo(c0-20,120+i*12-h*.15,c0+20,160+i*12-h*.1,c0+60,140+i*12);cx.stroke()}
+   plateArrow(80,170,108);plateArrow(560,470,108);tagT('سلسلة جبلية (مثل الهيمالايا)',c0+175,130-h*.55);tagT('تصادم صفيحتين قاريتين',c0,248,{bg:'rgba(80,20,5,.75)'})}
+  else{const g=cx.createLinearGradient(0,0,0,H);cx.fillStyle='#4d6b3a';cx.fillRect(0,0,W,H);cx.save();cx.globalAlpha=.55;cx.fillStyle=pat('sed');cx.fillRect(0,0,W,H);cx.restore();
+   cx.fillStyle='rgba(30,60,25,.45)';for(let i=0;i<40;i++){const r=A.rng(i+3);cx.beginPath();cx.arc(r()*W,r()*H,6+r()*12,0,6.283);cx.fill()}
+   const off=s*2;cx.save();cx.beginPath();cx.rect(0,0,W/2,H);cx.clip();cx.translate(0,-off/2);cx.strokeStyle='#3b82f6';cx.lineWidth=9;cx.beginPath();cx.moveTo(-10,140);cx.bezierCurveTo(120,120,220,180,W/2+10,160);cx.stroke();cx.strokeStyle='#d6d3d1';cx.lineWidth=6;cx.beginPath();cx.moveTo(-10,240);cx.lineTo(W/2+10,236);cx.stroke();cx.setLineDash([8,8]);cx.strokeStyle='#fde047';cx.lineWidth=1.4;cx.beginPath();cx.moveTo(-10,240);cx.lineTo(W/2+10,236);cx.stroke();cx.setLineDash([]);cx.restore();
+   cx.save();cx.beginPath();cx.rect(W/2,0,W/2,H);cx.clip();cx.translate(0,off/2);cx.strokeStyle='#3b82f6';cx.lineWidth=9;cx.beginPath();cx.moveTo(W/2-10,160);cx.bezierCurveTo(420,140,520,110,W+10,130);cx.stroke();cx.strokeStyle='#d6d3d1';cx.lineWidth=6;cx.beginPath();cx.moveTo(W/2-10,236);cx.lineTo(W+10,232);cx.stroke();cx.setLineDash([8,8]);cx.strokeStyle='#fde047';cx.lineWidth=1.4;cx.beginPath();cx.moveTo(W/2-10,236);cx.lineTo(W+10,232);cx.stroke();cx.setLineDash([]);cx.restore();
+   cx.strokeStyle='rgba(40,20,10,.85)';cx.lineWidth=4;cx.beginPath();for(let y=0;y<=H;y+=12)cx.lineTo(W/2+Math.sin(y*.3)*3,y);cx.stroke();
+   const q=(t*.6)%1;cx.strokeStyle=`rgba(254,240,138,${1-q})`;cx.lineWidth=2;[1,2,3].forEach(k=>{cx.beginPath();cx.arc(W/2,190,q*40*k,0,6.283);cx.stroke()});
+   Qarrow(W/2-60,90,W/2-60,40,'#fde047',4);Qarrow(W/2+60,40,W/2+60,90,'#fde047',4);tagT('صدع تحويلي — منظر علوي · '+v.y+' مليون سنة',470,22,{fs:12,bg:'rgba(5,12,28,.85)'});tagT('نهر وطريق مُزاحان بسبب الانزلاق',W/2,296);tagT('بؤرة زلزال',W/2+70,190,{bg:'rgba(80,60,0,.8)'})}
+  if(v.k!==3)tagT(['حدود متباعدة','حدود متقاربة: محيطية–قارية','حدود متقاربة: قارية–قارية'][v.k]+' · '+v.y+' مليون سنة',470,22,{fs:12,bg:'rgba(5,12,28,.85)'});
+  cx.restore();return ['تتباعد الصفائح فتصعد الصهارة مكوّنة قشرة محيطية جديدة وظهرة وسط محيطية.','تندس الصفيحة المحيطية الأثقل تحت القارية فيتكوّن خندق محيطي وتنشأ براكين على القارة.','تتصادم صفيحتان قاريتان فتنضغط الصخور وتلتوي مكوّنة سلاسل جبلية عالية.','تنزلق الصفيحتان جانبيًا على امتداد الصدع فتُزاح المعالم وتحدث الزلازل (مثل صدع البحر الميت).'][v.k]}})();
 
 window.CQB=QB;})();
 (function(){'use strict';

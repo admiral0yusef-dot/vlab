@@ -235,12 +235,130 @@ draw:function(g,S,v,T){bg(g,'#7dd3fc','#e0f2fe');var A=this.amp(v),on=S.run&&S.d
 out:function(S,v){return [['التردد الطبيعي للمبنى',fx(this.fn(v),2)+' Hz'],['تكبير الاهتزاز',fx(this.amp(v),1)+'×'],['الضرر',fx(S.dmg*100,0)+' %']]},
 eq:'f₀ ≈ 10 / N  Hz',sci:'لكل مبنى تردد طبيعي يهتز به، ويقل كلما زاد ارتفاعه (نحو 10 ÷ عدد الطوابق هيرتز). إذا اقترب تردد الموجات الزلزالية من التردد الطبيعي يحدث الرنين فتتضخم الإزاحة كثيرًا وقد ينهار المبنى، ولذلك قد ينهار برج متوسط الارتفاع ويسلم جاره الأقصر أو الأطول. الدعامات ترفع التردد الطبيعي، والعوازل القاعدية والمخمّدات تمتص الطاقة.'});
 
+// ===================== الفضاء والكون (مستوحاة من محاكاة ناسا وتلسكوبي هابل وجيمس ويب) =====================
+function sRng(seed){var s=seed>>>0||1;return function(){s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+// خلفية فضاء عميق مخزنة: سدم خافتة + نجوم + مجرات بعيدة (حقل هابل العميق)
+function deepBg(g,S,T){if(!deepBg.c){var c=document.createElement('canvas');c.width=W;c.height=H;var x=c.getContext('2d'),r=sRng(77);var q=x.createRadialGradient(W*.5,H*.45,20,W*.5,H*.5,W*.75);q.addColorStop(0,'#0b1530');q.addColorStop(.55,'#060b1d');q.addColorStop(1,'#02040c');x.fillStyle=q;x.fillRect(0,0,W,H);
+  x.globalCompositeOperation='lighter';[[.18,.25,[90,40,140]],[.82,.7,[20,70,130]],[.7,.15,[120,40,80]],[.25,.8,[30,60,110]]].forEach(function(n){for(var k=0;k<5;k++)glow(x,W*n[0]+(r()-.5)*160,H*n[1]+(r()-.5)*110,90+r()*120,n[2],.10)});
+  for(var i=0;i<900;i++){var a=r(),s=a<.9?r()*.8+.25:r()*1.3+.6,cc=r()<.15?'255,214,170':r()<.3?'180,205,255':'240,244,255';x.fillStyle='rgba('+cc+','+(.25+r()*.65)+')';x.fillRect(r()*W,r()*H,s,s)}
+  for(var j=0;j<26;j++){var gx=r()*W,gy=r()*H,gs=2+r()*5,an=r()*PI;x.save();x.translate(gx,gy);x.rotate(an);x.scale(1,.35+r()*.5);var gq=x.createRadialGradient(0,0,0,0,0,gs);gq.addColorStop(0,'rgba(255,236,200,.55)');gq.addColorStop(1,'rgba(160,140,255,0)');x.fillStyle=gq;x.beginPath();x.arc(0,0,gs,0,7);x.fill();x.restore()}
+  deepBg.c=c}g.drawImage(deepBg.c,0,0)}
+function panel(g,x,y,w,h){g.fillStyle='rgba(3,8,24,.72)';rr(g,x,y,w,h,12);g.fill();g.strokeStyle='rgba(148,163,184,.3)';g.lineWidth=1;g.stroke()}
 
-var SUB={chem:['الكيمياء','#f0abfc'],phys:['الفيزياء','#7dd3fc'],bio:['الأحياء','#86efac'],earth:['علوم الأرض','#fcd34d']};
+// ---------- 1) المجرة الحلزونية ومنحنى الدوران (المادة المظلمة) ----------
+SIMS.push({id:'galaxy',s:'space',e:'🌌',t:'صانع المجرات: ادخل قلب مجرة',h:'شكّل مجرة حلزونية أو إهليلجية وشاهد نجومها تدور، واكتشف لغز المادة المظلمة.',live:1,
+c:[{k:'ty',l:'نوع المجرة (شوكة هابل الرنانة)',o:['حلزونية ذات قضيب (درب التبانة)','حلزونية','إهليلجية','غير منتظمة']},{k:'dm',l:'نموذج الكتلة',o:['مع المادة المظلمة (المرصود)','المادة المرئية فقط']},{k:'inc',l:'زاوية الميل',min:0,max:75,st:1,v:35,u:'°'},{k:'sp',l:'سرعة الزمن',min:2,max:40,st:1,v:12,u:'مليون سنة/ث'}],
+vflat:230,Rc:3.2,
+vel:function(R,dm){var vf=this.vflat,Rc=this.Rc;var vin=vf*(1-Math.exp(-R/1.1));if(dm===0)return vin;return R<Rc?vin:vf*(1-Math.exp(-Rc/1.1))*Math.sqrt(Rc/R)},
+init:function(v){var S={t:0,st:[],ty:v.ty,lost:0},r=sRng(11+v.ty),N=v.ty===2?2400:3400,i,R0;
+ for(i=0;i<N;i++){var o={};if(v.ty===2){R0=Math.pow(r(),1.8)*12+.15;o.R=R0;o.e=.25+r()*.5;o.tl=r()*PI*2;o.th=r()*PI*2;o.z=(r()-.5)*R0*.9;o.c=r()<.7?[255,214,160]:[255,190,130];o.s=r()<.08?1.8:1;o.ell=1}
+  else if(v.ty===3){var cl=Math.floor(r()*6),cr=sRng(300+cl);var cxp=(cr()-.5)*14,cyp=(cr()-.5)*9;var rr2=Math.pow(r(),.7)*3.2;var aa=r()*PI*2;o.px=cxp+Math.cos(aa)*rr2;o.py=cyp+Math.sin(aa)*rr2;o.R=Math.hypot(o.px,o.py)+.2;o.th=Math.atan2(o.py,o.px);o.e=0;o.tl=0;o.z=(r()-.5)*1.2;o.c=r()<.6?[170,200,255]:r()<.5?[255,150,200]:[255,240,220];o.s=r()<.1?2:1;o.irr=1}
+  else{var bar=v.ty===0,u=r();if(u<.18){R0=Math.pow(r(),2)*(bar?4.2:2.6)+.1;o.R=R0;o.e=bar?.62+r()*.15:.2+r()*.3;o.tl=bar?0:r()*6.3;o.th=r()*PI*2;o.ff=bar?1.8:0;o.z=(r()-.5)*R0*.6;o.c=[255,215,165];o.s=1;o.bulge=1}
+   else{R0=(bar?3.6:1.4)+Math.pow(r(),1.15)*(15-(bar?3.6:1.4));o.R=R0;o.e=.38;o.ff=1.8;o.tl=(R0-(bar?3.6:1.4))*.42;do{o.th=r()*PI*2}while(r()>1/(1+1.8*Math.pow(Math.sin(o.th),2)));o.z=(r()-.5)*.5;var hot=r()<.35;o.c=hot?[175,205,255]:r()<.5?[235,240,255]:[255,226,190];o.s=r()<.05?1.9:1;o.arm=1}}
+  o.w=0;S.st.push(o)}
+ S.sun={R:8.2,th:1.1};return S},
+step:function(S,v,dt){if(S.ty!==v.ty){var n=this.init(v);for(var k in n)S[k]=n[k]}var my=dt*v.sp;S.t+=my;var lost=0;
+ for(var i=0;i<S.st.length;i++){var o=S.st[i];var vv=this.vel(o.R,v.dm),w=vv*1.023/(o.R*1000);if(o.irr)w*=.5;if(o.ff)w*=(1+o.ff*Math.pow(Math.sin(o.th),2))/(1+o.ff*.5);o.th+=w*my;
+  if(v.dm===1&&o.R>this.Rc*1.7&&!o.bulge){var vk=this.vel(o.R,1);o.R+=(this.vflat-vk)/this.vflat*o.R*.0016*my}else if(v.dm===0&&o.R0&&o.R>o.R0){o.R=Math.max(o.R0,o.R-o.R*.004*my)}
+  if(!o.R0)o.R0=o.R;if(o.R>16)lost++}
+ S.lost=lost/S.st.length;S.sun.th+=this.vel(S.sun.R,v.dm)*1.023/(S.sun.R*1000)*my},
+pos:function(o,ci,si){var a=o.R,b=o.R*(1-o.e),x=a*Math.cos(o.th),y=b*Math.sin(o.th),ct=Math.cos(o.tl),st=Math.sin(o.tl);var X=x*ct-y*st,Y=x*st+y*ct;return [X,Y*ci+o.z*si]},
+draw:function(g,S,v,T){deepBg(g,S,T);var cx=430,cy=255,sc=15.5,inc=v.inc*PI/180,ci=Math.cos(inc),si=Math.sin(inc),rot=-.35,cr=Math.cos(rot),sr=Math.sin(rot),i,o,p,X,Y;
+ // هالة وضوء القرص
+ g.save();g.globalCompositeOperation='lighter';g.translate(cx,cy);g.rotate(rot);g.scale(1,v.ty===2?.72:Math.max(.25,ci));
+ if(v.ty!==3){glow(g,0,0,v.ty===2?190:250,v.ty===2?[255,190,120]:[120,140,220],v.ty===2?.22:.12);glow(g,0,0,v.ty===2?95:70,[255,215,160],.55);glow(g,0,0,26,[255,245,225],.9)}
+ g.restore();
+ // النجوم
+ g.save();g.globalCompositeOperation='lighter';
+ for(i=0;i<S.st.length;i++){o=S.st[i];if(o.irr){var rr3=o.R,tt=o.th;X=Math.cos(tt)*rr3;Y=Math.sin(tt)*rr3*ci+o.z*si}else{p=this.pos(o,ci,si);X=p[0];Y=p[1]}
+  var x=cx+(X*cr-Y*sr)*sc,y=cy+(X*sr+Y*cr)*sc;if(x<-5||x>W+5||y<-5||y>H+5)continue;var fa=o.R>15?C(1-(o.R-15)/6,0,1):1;if(fa<=0)continue;
+  g.fillStyle='rgba('+o.c[0]+','+o.c[1]+','+o.c[2]+','+(o.bulge||o.ell?.55:.75)*fa+')';var ss=o.s*(o.bulge?1.1:1.25);g.fillRect(x,y,ss,ss);
+  if(o.s>1.5&&o.arm){glow(g,x,y,5,o.c[0]>200&&o.c[2]<200?[255,120,170]:o.c,.35)}}
+ g.restore();
+ // خطوط الغبار المعتمة على الأذرع (للحلزونية فقط)
+ if(v.ty<2){g.save();g.globalCompositeOperation='multiply';g.strokeStyle='rgba(60,40,40,.35)';g.lineWidth=3;for(var arm=0;arm<2;arm++){g.beginPath();for(var R=v.ty===0?3.8:2;R<14;R+=.25){var th=arm*PI+(R-(v.ty===0?3.6:1.4))*.36+.35,b=R*.72,xx=R*Math.cos(th)*1,yy=0;var ang=(R-(v.ty===0?3.6:1.4))*.36;var ex=R*Math.cos(PI/2+arm*PI)*0;var px=R*Math.cos(ang+PI/2*0)*0;var q=this.spiralPt(R,arm,v.ty);X=q[0];Y=q[1]*ci;var x2=cx+(X*cr-Y*sr)*sc,y2=cy+(X*sr+Y*cr)*sc;R===(v.ty===0?3.8:2)?g.moveTo(x2,y2):g.lineTo(x2,y2)}g.stroke()}g.restore()}
+ // الشمس
+ if(v.ty<2){p=[S.sun.R*Math.cos(S.sun.th),S.sun.R*Math.sin(S.sun.th)*ci];X=p[0];Y=p[1];var sx=cx+(X*cr-Y*sr)*sc,sy=cy+(X*sr+Y*cr)*sc;glow(g,sx,sy,12,[255,230,120],.9);g.fillStyle='#fff7cc';g.beginPath();g.arc(sx,sy,2.6,0,7);g.fill();g.strokeStyle='rgba(253,224,71,.8)';g.lineWidth=1.2;g.beginPath();g.moveTo(sx+4,sy-4);g.lineTo(sx+22,sy-20);g.stroke();panel(g,sx+18,sy-38,86,22);tx(g,'☉ نحن هنا',sx+61,sy-27,12,'#fde68a')}
+ // مقياس
+ g.strokeStyle='rgba(226,232,240,.8)';g.lineWidth=2;g.beginPath();g.moveTo(40,490);g.lineTo(40+sc*5,490);g.stroke();tx(g,'5 كيلو فرسخ ≈ 16,000 سنة ضوئية',40+sc*5+8,490,11,'#cbd5e1','left',0);
+ // منحنى الدوران
+ var px0=666,py0=330,pw=212,ph=160;panel(g,px0-10,py0-30,pw+22,ph+56);tx(g,'منحنى الدوران',px0+pw/2,py0-16,13,'#e2e8f0');
+ g.strokeStyle='rgba(148,163,184,.5)';g.lineWidth=1;g.beginPath();g.moveTo(px0+20,py0);g.lineTo(px0+20,py0+ph-20);g.lineTo(px0+pw,py0+ph-20);g.stroke();tx(g,'R (kpc)',px0+pw-14,py0+ph-6,10,'#94a3b8','center',0);tx(g,'v km/s',px0+22,py0-4,10,'#94a3b8','left',0);
+ var self=this,gx=function(R){return px0+20+R/16*(pw-20)},gy=function(vv){return py0+ph-20-vv/300*(ph-24)};
+ [0,1].forEach(function(m){g.strokeStyle=m===0?'#22d3ee':'#fb923c';g.lineWidth=m===v.dm?2.6:1.4;g.setLineDash(m===0?[]:[5,4]);g.beginPath();for(var R=.1;R<=16;R+=.2){var X1=gx(R),Y1=gy(self.vel(R,m));R<.2?g.moveTo(X1,Y1):g.lineTo(X1,Y1)}g.stroke()});g.setLineDash([]);
+ if(v.ty<2){g.fillStyle='#fde68a';g.beginPath();g.arc(gx(8.2),gy(this.vel(8.2,v.dm)),3.5,0,7);g.fill()}
+ tx(g,'— المرصود (مع المادة المظلمة)',px0+pw,py0+ph+2,10,'#67e8f9','right',0);tx(g,'- - المتوقع من المادة المرئية',px0+pw,py0+ph+16,10,'#fdba74','right',0);
+ meter(g,24,22,'الزمن المنقضي',fx(S.t,0)+' مليون سنة','#c4b5fd');meter(g,184,22,'سرعة الشمس المدارية',v.ty<2?fx(this.vel(8.2,v.dm),0)+' km/s':'—','#fde68a');
+ tx(g,['درب التبانة: حلزونية ذات قضيب (SBbc)','مجرة حلزونية (Sb) مثل أندروميدا M31','مجرة إهليلجية (E3) مثل M87','مجرة غير منتظمة مثل سحابة ماجلان الكبرى'][v.ty],876,36,15,'#e0e7ff','right');
+ if(v.dm===1&&v.ty!==2)tx(g,S.lost>.05?'⚠ النجوم الخارجية تفلت! الكتلة المرئية وحدها لا تكفي لإمساكها':'المادة المرئية فقط… راقب أطراف المجرة',876,62,13,'#fca5a5','right')},
+spiralPt:function(R,arm,ty){var R0=ty===0?3.6:1.4,tl=(R-R0)*.42,e=.38,a=R,b=R*(1-e),th=arm*PI+.12;var x=a*Math.cos(th),y=b*Math.sin(th);return [x*Math.cos(tl)-y*Math.sin(tl),x*Math.sin(tl)+y*Math.cos(tl)]},
+out:function(S,v){var vs=this.vel(8.2,v.dm);return [['سرعة الشمس حول المركز',v.ty<2?fx(vs,0)+' km/s':'—'],['مدة السنة المجرية',v.ty<2?fx(2*PI*8200/(vs*1.023),0)+' مليون سنة':'—'],['دورات الشمس المنقضية',v.ty<2?fx(S.t/(2*PI*8200/(vs*1.023)),2):'—'],['نجوم تفلت من المجرة',fx(S.lost*100,0)+' %'],['النجوم المرسومة',S.st.length+' (تمثّل 100–400 مليار نجم)']]},
+eq:'v(R) = √(G·M(R) / R)  ←  منحنى مسطح يعني كتلة غير مرئية تزداد مع R',
+sci:'تتوزع المجرات حسب شوكة هابل الرنانة: إهليلجية، وحلزونية، وحلزونية ذات قضيب، وغير منتظمة. الأذرع الحلزونية ليست نجومًا ثابتة؛ إنها موجات كثافة: تدور كل نجمة في مدار بيضاوي يميل اتجاهه قليلًا كلما ابتعدنا عن المركز، فتتزاحم المدارات وتظهر الأذرع وتولد فيها نجوم زرقاء حارة وسدم وردية. قاست فيرا روبن (1970) سرعات النجوم فوجدتها ثابتة تقريبًا حتى أطراف المجرة، بينما تتنبأ المادة المرئية بتناقصها. هذا الفرق هو أقوى دليل على المادة المظلمة التي تشكّل نحو 85% من مادة الكون وترسم ناسا خرائطها بتلسكوبي هابل وجيمس ويب. جرّب نموذج «المادة المرئية فقط» لترى النجوم الخارجية تفلت. تدور الشمس بسرعة نحو 230 كم/ث وتكمل دورة كل نحو 230 مليون سنة.'});
+
+// ---------- 2) تمدد الكون وقانون هابل ----------
+SIMS.push({id:'hubble',s:'space',e:'🔭',t:'الكون يتمدد: قانون هابل',h:'شاهد المجرات تتباعد، وقس سرعتها وانزياحها نحو الأحمر، واحسب عمر الكون.',live:1,
+c:[{k:'H',l:'ثابت هابل H₀',min:50,max:90,st:1,v:70,u:'km/s/Mpc'},{k:'obs',l:'موقع الراصد',o:['درب التبانة','مجرة بعيدة']},{k:'vw',l:'العرض',o:['أسهم السرعة','الانزياح نحو الأحمر']}],go:'ابدأ تمدد الكون',
+init:function(v){var r=sRng(5),G=[];for(var i=0;i<70;i++){var x=(r()-.5)*1.15*W/1.0,y=(r()-.5)*1.1*H;if(i===0){x=0;y=0}if(i===1){x=-250;y=-90}G.push({x:x,y:y,t:r()<.65?0:r()<.6?1:2,an:r()*PI,s:.7+r()*.6,rot:r()<.5?1:-1})}return {a:1,run:0,t:0,G:G}},
+start:function(S){S.run=1},
+step:function(S,v,dt){if(!S.run)return;S.t+=dt;var Hd=v.H/70;S.a*=1+dt*.075*Hd;if(S.a>2.6){S.a=2.6;S.run=0}},
+gal:function(g,x,y,s,t,an,col,T){g.save();g.translate(x,y);g.rotate(an);var gq;if(t===1){g.scale(1,.7);gq=g.createRadialGradient(0,0,0,0,0,9*s);gq.addColorStop(0,'rgba(255,240,215,.95)');gq.addColorStop(1,'rgba('+col+',0)');g.fillStyle=gq;g.beginPath();g.arc(0,0,9*s,0,7);g.fill()}
+ else{g.scale(1,t===2?.32:.55);gq=g.createRadialGradient(0,0,0,0,0,11*s);gq.addColorStop(0,'rgba(255,245,225,1)');gq.addColorStop(.25,'rgba('+col+',.7)');gq.addColorStop(1,'rgba('+col+',0)');g.fillStyle=gq;g.beginPath();g.arc(0,0,11*s,0,7);g.fill();g.strokeStyle='rgba('+col+',.55)';g.lineWidth=1.4;for(var k=0;k<2;k++){g.beginPath();for(var q=0;q<1;q+=.05){var rr4=2+q*9*s,aa=k*PI+q*3.2+T*.2;q===0?g.moveTo(Math.cos(aa)*rr4,Math.sin(aa)*rr4):g.lineTo(Math.cos(aa)*rr4,Math.sin(aa)*rr4)}g.stroke()}}g.restore()},
+draw:function(g,S,v,T){deepBg(g,S,T);var o=S.G[v.obs===0?0:1],cx=v.obs===0?W/2:W/2,cy=H/2,k=S.a,MP=0.06,i,G2=[];
+ // شبكة مرافقة تتمدد
+ g.strokeStyle='rgba(99,102,241,.13)';g.lineWidth=1;for(i=-8;i<=8;i++){var gx=cx+(i*90-o.x)*k;g.beginPath();g.moveTo(gx,0);g.lineTo(gx,H);g.stroke();var gy=cy+(i*90-o.y)*k;g.beginPath();g.moveTo(0,gy);g.lineTo(W,gy);g.stroke()}
+ for(i=0;i<S.G.length;i++){var q=S.G[i],dx=(q.x-o.x)*k,dy=(q.y-o.y)*k,x=cx+dx,y=cy+dy,dpx=Math.hypot(dx,dy),d=dpx*MP*10,vel=v.H*d,z=vel/299792;if(x<-30||x>W+30||y<-30||y>H+30)continue;G2.push([d,vel]);
+  var col=v.vw===1?(function(){var f=C(z/.12,0,1);return Math.round(LP(190,255,f))+','+Math.round(LP(210,110,f))+','+Math.round(LP(255,80,f))})():'200,215,255';
+  this.gal(g,x,y,q.s*(1.15-C(d/600,0,.5)),q.t,q.an,col,T*q.rot);
+  if(v.vw===0&&q!==o&&dpx>12){var L=dpx*.18*(S.run?1:.7),ux=dx/dpx,uy=dy/dpx;g.strokeStyle='rgba(250,204,21,.85)';g.fillStyle='rgba(250,204,21,.85)';g.lineWidth=1.6;g.beginPath();g.moveTo(x+ux*9,y+uy*9);g.lineTo(x+ux*(9+L),y+uy*(9+L));g.stroke();var ex=x+ux*(9+L),ey=y+uy*(9+L);g.beginPath();g.moveTo(ex+ux*5,ey+uy*5);g.lineTo(ex-uy*3.5,ey+ux*3.5);g.lineTo(ex+uy*3.5,ey-ux*3.5);g.fill()}}
+ glow(g,cx,cy,30,[34,211,238],.35);g.strokeStyle='#22d3ee';g.lineWidth=2;g.beginPath();g.arc(cx,cy,15,0,7);g.stroke();panel(g,cx-52,cy+20,104,22);tx(g,v.obs===0?'نحن (درب التبانة)':'راصد في مجرة أخرى',cx,cy+31,11,'#a5f3fc');
+ // مخطط v-d
+ var px=650,py=318,pw=220,ph=160;panel(g,px-12,py-28,pw+24,ph+40);tx(g,'السرعة مقابل المسافة',px+pw/2,py-14,13,'#e2e8f0');g.strokeStyle='rgba(148,163,184,.5)';g.lineWidth=1;g.beginPath();g.moveTo(px+18,py);g.lineTo(px+18,py+ph-18);g.lineTo(px+pw,py+ph-18);g.stroke();tx(g,'d (Mpc)',px+pw-16,py+ph-5,10,'#94a3b8','center',0);tx(g,'v km/s',px+20,py+2,10,'#94a3b8','left',0);
+ var dM=700,vM=60000;g.strokeStyle='rgba(250,204,21,.7)';g.lineWidth=1.6;g.beginPath();g.moveTo(px+18,py+ph-18);var de=Math.min(dM,vM/v.H);g.lineTo(px+18+de/dM*(pw-18),py+ph-18-v.H*de/vM*(ph-22));g.stroke();
+ g.fillStyle='#93c5fd';G2.forEach(function(p){if(p[0]>dM||p[1]>vM)return;g.beginPath();g.arc(px+18+p[0]/dM*(pw-18),py+ph-18-p[1]/vM*(ph-22),2.3,0,7);g.fill()});
+ meter(g,24,22,'معامل الحجم a(t)',fx(S.a,2)+'×','#c4b5fd');meter(g,184,22,'عمر الكون التقريبي 1/H₀',fx(977.8/v.H,1)+' مليار سنة','#fde68a');
+ if(!S.run&&S.a<1.01)tx(g,'اضغط «ابدأ تمدد الكون» وراقب: كل مجرة تبتعد عن كل مجرة أخرى',W/2,H-22,15,'#e0e7ff');
+ if(v.obs===1)tx(g,'لاحظ: الراصد في أي مجرة يرى المشهد نفسه — لا يوجد مركز للتمدد',W/2,H-22,14,'#a5f3fc')},
+out:function(S,v){var far=0;S.G.forEach(function(q){var d=Math.hypot(q.x-S.G[0].x,q.y-S.G[0].y)*S.a*.6;if(d<700&&d>far)far=d});var vf=v.H*far;return [['ثابت هابل',v.H+' km/s/Mpc'],['عمر الكون ≈ 1/H₀',fx(977.8/v.H,1)+' مليار سنة'],['أبعد مجرة على الشاشة',fx(far,0)+' Mpc'],['سرعة ابتعادها',fx(vf,0)+' km/s'],['انزياحها نحو الأحمر z ≈ v/c',fx(vf/299792,3)]]},
+eq:function(v){return 'v = H₀ × d   ·   H₀ = '+v.H+' km/s/Mpc   ·   عمر الكون ≈ 1/H₀ ≈ '+fx(977.8/v.H,1)+' مليار سنة'},
+sci:'عام 1929 لاحظ إدوين هابل أن ضوء المجرات البعيدة منزاح نحو الأحمر، وأن سرعة ابتعادها تتناسب طرديًّا مع بعدها: v = H₀·d. التفسير ليس أن المجرات تندفع في الفضاء من مركز ما، بل أن الفضاء نفسه يتمدد فتتباعد كل المجرات عن بعضها كنقاط على بالون يُنفخ؛ لذلك يرى الراصد في أي مجرة المشهد نفسه. يقيس تلسكوب هابل الفضائي (الذي سُمّي تكريمًا له) وتلسكوب جيمس ويب قيمة H₀ بنحو 67–73 كم/ث لكل ميغافرسخ، ومقلوبها يعطي عمرًا تقريبيًّا للكون؛ أدق تقدير اليوم نحو 13.8 مليار سنة. الميغافرسخ ≈ 3.26 مليون سنة ضوئية.'});
+
+// ---------- 3) تصادم مجرتين (درب التبانة وأندروميدا) ----------
+SIMS.push({id:'collide',s:'space',e:'💫',t:'تصادم المجرات: درب التبانة وأندروميدا',h:'أطلق مجرتين نحو بعضهما وشاهد الذيول المدّية وولادة مجرة جديدة.',live:1,
+c:[{k:'m',l:'كتلة أندروميدا ÷ كتلة درب التبانة',min:.5,max:2,st:.1,v:1.2,u:'×'},{k:'rp',l:'مسافة أقرب اقتراب',min:20,max:120,st:5,v:55,u:'ك.ف.ف'},{k:'dir',l:'اتجاه دوران أندروميدا',o:['مع اتجاه الحركة','عكس اتجاه الحركة']}],go:'أطلق المجرتين',
+GM:52000,
+init:function(v){var S={run:0,t:0,P:[]},M1=this.GM,M2=this.GM*v.m,Mt=M1+M2,d0=430,rp=v.rp*1.6;var vesc=Math.sqrt(2*Mt/d0),vv=vesc*.82,E=.5*vv*vv-Mt/d0,vp=Math.sqrt(2*(E+Mt/rp)),L=rp*vp,vt=L/d0,vr=-Math.sqrt(Math.max(0,vv*vv-vt*vt));
+ var rx=d0*Math.cos(.38),ry=d0*Math.sin(.38),ux=rx/d0,uy=ry/d0,rvx=vr*ux-vt*uy,rvy=vr*uy+vt*ux;
+ var c1={x:W/2-rx*M2/Mt,y:H/2-ry*M2/Mt,vx:-rvx*M2/Mt,vy:-rvy*M2/Mt,M:M1},c2={x:W/2+rx*M1/Mt,y:H/2+ry*M1/Mt,vx:rvx*M1/Mt,vy:rvy*M1/Mt,M:M2};S.c=[c1,c2];
+ var r=sRng(9);[[c1,1,[160,195,255],60],[c2,v.dir===0?1:-1,[255,205,150],60*Math.sqrt(v.m)]].forEach(function(A,gi){var c=A[0],sg=A[1],Rm=A[3];for(var i=0;i<900;i++){var R=4+Math.pow(r(),.9)*Rm,a=r()*PI*2;if(i%3===0)a=Math.floor(r()*2)*PI+R*.09+(r()-.5)*.5;var vc=Math.sqrt(c.M*R*R/Math.pow(R*R+36,1.5));S.P.push({x:c.x+Math.cos(a)*R,y:c.y+Math.sin(a)*R*(gi?.62:1),vx:c.vx-Math.sin(a)*vc*sg,vy:c.vy+Math.cos(a)*vc*sg*(gi?.62:1),g:gi,c:A[2],hot:r()<.25})}});
+ return S},
+start:function(S){S.run=1},
+acc:function(c,x,y){var dx=c.x-x,dy=c.y-y,r2=dx*dx+dy*dy+36,f=c.M/(r2*Math.sqrt(r2));return [dx*f,dy*f]},
+step:function(S,v,dt){if(!S.run)return;var n=3,h=dt*1.15/n,c=S.c,i,k;for(k=0;k<n;k++){S.t+=h;
+  var a1=this.acc(c[1],c[0].x,c[0].y),a2=this.acc(c[0],c[1].x,c[1].y),d=Math.hypot(c[0].x-c[1].x,c[0].y-c[1].y);c[0].vx+=a1[0]*h;c[0].vy+=a1[1]*h;c[1].vx+=a2[0]*h;c[1].vy+=a2[1]*h;
+  if(d<150){var fr=1-.55*h*(1-d/150);var mx=(c[0].vx*c[0].M+c[1].vx*c[1].M)/(c[0].M+c[1].M),my=(c[0].vy*c[0].M+c[1].vy*c[1].M)/(c[0].M+c[1].M);c.forEach(function(q){q.vx=mx+(q.vx-mx)*fr;q.vy=my+(q.vy-my)*fr})}
+  c.forEach(function(q){q.x+=q.vx*h;q.y+=q.vy*h});
+  for(i=0;i<S.P.length;i++){var p=S.P[i],b1=this.acc(c[0],p.x,p.y),b2=this.acc(c[1],p.x,p.y);p.vx+=(b1[0]+b2[0])*h;p.vy+=(b1[1]+b2[1])*h;p.x+=p.vx*h;p.y+=p.vy*h}}
+  // إبقاء مركز الكتلة وسط الشاشة
+  var Mt=c[0].M+c[1].M,mx2=(c[0].x*c[0].M+c[1].x*c[1].M)/Mt-W/2,my2=(c[0].y*c[0].M+c[1].y*c[1].M)/Mt-H/2;if(Math.abs(mx2)>.5||Math.abs(my2)>.5){c.forEach(function(q){q.x-=mx2*.05;q.y-=my2*.05});S.P.forEach(function(p){p.x-=mx2*.05;p.y-=my2*.05})}},
+draw:function(g,S,v,T){deepBg(g,S,T);var c=S.c,i,p;g.save();g.globalCompositeOperation='lighter';
+ c.forEach(function(q,k){glow(g,q.x,q.y,70,k?[255,190,120]:[130,160,255],.14)});
+ for(i=0;i<S.P.length;i++){p=S.P[i];if(p.x<-4||p.x>W+4||p.y<-4||p.y>H+4)continue;g.fillStyle='rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+(p.hot?.95:.6)+')';var s=p.hot?1.9:1.3;g.fillRect(p.x,p.y,s,s)}
+ var d=Math.hypot(c[0].x-c[1].x,c[0].y-c[1].y);if(S.run&&d<120){for(var k=0;k<3;k++){var a=T*1.7+k*2.1,rr5=20+d*.4;glow(g,(c[0].x+c[1].x)/2+Math.cos(a)*rr5,(c[0].y+c[1].y)/2+Math.sin(a)*rr5*.6,16,[255,120,180],.35)}}
+ c.forEach(function(q,k){glow(g,q.x,q.y,24,[255,240,215],.95);glow(g,q.x,q.y,9,[255,255,255],1)});g.restore();
+ if(!S.run&&S.t===0){panel(g,c[0].x-44,c[0].y+66,88,22);tx(g,'درب التبانة',c[0].x,c[0].y+77,12,'#bfdbfe');panel(g,c[1].x-40,c[1].y+66,80,22);tx(g,'أندروميدا',c[1].x,c[1].y+77,12,'#fed7aa')}
+ var gy=S.t*.25;meter(g,24,22,'الزمن من الآن',fx(gy,1)+' مليار سنة','#c4b5fd');meter(g,184,22,'المسافة بين المركزين',fx(d/1.6*10,0)+' ألف س.ض','#fde68a');
+ if(S.run){if(!S.ph&&d<95)S.ph=1;else if(S.ph===1&&d>150)S.ph=2;else if(S.ph===2&&d<60)S.ph=3;else if(S.ph>=1&&d<22)S.ph=4}var st=!S.run&&S.t===0?'جاهز للإطلاق':['تقترب المجرتان بفعل الجاذبية','اللقاء الأول: الجاذبية المدّية تشدّ الأطراف','تبتعدان قليلًا وتظهر الذيول المدّية','تعودان للالتقاء وتتشابكان','اندماج: تتشكل مجرة إهليلجية عملاقة («ميلكوميدا»)'][S.ph||0];tx(g,st,876,36,15,'#e0e7ff','right')},
+out:function(S,v){var c=S.c,d=Math.hypot(c[0].x-c[1].x,c[0].y-c[1].y);return [['الزمن المحاكى',fx(S.t*.25,2)+' مليار سنة'],['المسافة بين المركزين',fx(d/1.6*10,0)+' ألف سنة ضوئية'],['نسبة الكتلتين',fx(v.m,1)+'×'],['تصادمات النجوم المتوقعة','تقريبًا صفر — المسافات بين النجوم هائلة']]},
+eq:'F = G·m₁·m₂ / r²   ·   أندروميدا تقترب بسرعة ≈ 110 km/s',
+sci:'أندروميدا (M31) أقرب مجرة حلزونية كبيرة إلينا، على بعد نحو 2.5 مليون سنة ضوئية، وتقترب منا بسرعة تقارب 110 كم/ث. استخدمت ناسا قياسات تلسكوب هابل (2012) لتتوقع لقاء المجرتين بعد نحو 4–5 مليارات سنة واندماجهما في مجرة إهليلجية عملاقة، وتشير دراسات أحدث إلى أن الاندماج غير مؤكد واحتماله خلال 10 مليارات سنة قريب من النصف. حين تتقارب مجرتان تشدّ الجاذبية المدّية أطرافهما فتتكون ذيول وجسور نجمية طويلة، وتنضغط سحب الغاز فتولد موجات من النجوم الجديدة. ومع ذلك نادرًا ما تتصادم نجمتان لأن المسافات بينهما هائلة. المحاكاة مبسطة: كل مجرة نواة جاذبة ونجوم تتأثر بجاذبية النواتين.'});
+
+
+var SUB={chem:['الكيمياء','#f0abfc'],phys:['الفيزياء','#7dd3fc'],bio:['الأحياء','#86efac'],earth:['علوم الأرض','#fcd34d'],space:['الفضاء والكون','#c4b5fd']};
 var root=null,cur=null,S=null,V={},raf=0,last=0,T0=0,flt='all',cv=null,g=null,lastOut=0;
 function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e}
 function build(){if(root)return;root=el('div');root.id='yqFun';root.hidden=true;root.setAttribute('role','dialog');root.setAttribute('aria-label','مختبر الدهشة');
- root.innerHTML='<div class="yf-in"><div class="yf-top"><button type="button" class="yf-back" id="yfBack">→ رجوع</button><h2 id="yfTitle">✨ مختبر الدهشة</h2><div class="yf-sub" id="yfSub">'+SIMS.length+' تجربة ممتعة خارج المنهاج في الكيمياء والفيزياء والأحياء وعلوم الأرض. جرّب، غيّر المتغيرات، واكتشف العلم وراء الدهشة.</div></div><div id="yfList"><div class="yf-chips" id="yfChips"></div><div class="yf-grid" id="yfGrid"></div></div><div id="yfStage" hidden></div></div>';
+ root.innerHTML='<div class="yf-in"><div class="yf-top"><button type="button" class="yf-back" id="yfBack">→ رجوع</button><h2 id="yfTitle">✨ مختبر الدهشة</h2><div class="yf-sub" id="yfSub">'+SIMS.length+' تجربة ممتعة خارج المنهاج في الكيمياء والفيزياء والأحياء وعلوم الأرض والفضاء والكون. جرّب، غيّر المتغيرات، واكتشف العلم وراء الدهشة.</div></div><div id="yfList"><div class="yf-chips" id="yfChips"></div><div class="yf-grid" id="yfGrid"></div></div><div id="yfStage" hidden></div></div>';
  document.body.appendChild(root);
  document.getElementById('yfBack').onclick=function(){if(cur)showList();else close()};
  var ch=document.getElementById('yfChips'),cs=[['all','الكل']];for(var k in SUB)cs.push([k,SUB[k][0]]);
