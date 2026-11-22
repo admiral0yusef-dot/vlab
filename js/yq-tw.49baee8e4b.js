@@ -20,7 +20,7 @@ const RUN=/[A-Za-z0-9₀-₉⁰-⁹¹²³⁺⁻\[(°√Δ][A-Za-z0-9₀-₉⁰-�
 function colorRun(r){let out='',last=0,m;TOK.lastIndex=0;while((m=TOK.exec(r))){out+=esc(r.slice(last,m.index));const t=m[0];const isNum=(/^-?\d/.test(t)&&!/^\d+[A-Z]/.test(t))||/^(kJ|kPa|mmHg|mL|nm)$/.test(t);out+='<span class="'+(isNum?'qb-n':'qb-f')+'">'+esc(t)+'</span>';last=m.index+t.length}return out+esc(r.slice(last))}
 function hl(s,mode){s=String(s||'');let out='',last=0,m;RUN.lastIndex=0;
  const txt=t=>{let h=esc(t);if(mode==='e')h=h.replace(KWR,'<span class="qb-k">$1</span>');else h=h.replace(NEGR,'<span class="qb-x">$1</span>');return h};
- while((m=RUN.exec(s))){out+=txt(s.slice(last,m.index));out+='<span class="qb-l">'+colorRun(m[0])+'</span>';last=m.index+m[0].length}
+ while((m=RUN.exec(s))){out+=txt(s.slice(last,m.index));const _r=m[0];const _eq=/[→⇌]/.test(_r)&&_r.replace(/\s/g,'').length>6;out+=(_eq?'<span class="qb-eq">':'')+'<span class="qb-l">'+colorRun(_r)+'</span>'+(_eq?'</span>':'');last=m.index+m[0].length}
  out+=txt(s.slice(last));if(mode==='e')out=out.replace(/⇐([^⇐]*)$/,'⇐<span class="qb-r">$1</span>');return out}
 let S={view:'setup',name:'',cls:'',scope:'lesson',u:'u1',l:'u1l1',units:{},n:20,min:48,minAuto:true};let PREV='home';
 let EX=null,timerId=null;
@@ -28,26 +28,29 @@ function pool(){let ls=[];if(S.scope==='lesson')ls=[S.l];else if(S.scope==='unit
 function scopeLabel(){if(S.scope==='lesson')return 'درس: '+lessonName(S.l);if(S.scope==='unit')return META[S.u].n+': '+META[S.u].t;if(S.scope==='units'){const us=UNITS.filter(u=>S.units[u]);return 'الوحدات: '+us.map(u=>META[u].t).join('، ')}return 'المادة كاملة'}
 function shuf(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 const KI=x=>x[7];
+// مفتاح نص السؤال: يمنع ظهور السؤال نفسه (أو نسخة منه بأرقام/صيغ مختلفة) مرتين في الامتحان
+const SKc={};const SK=x=>SKc[x[0]]||(SKc[x[0]]=String(x[3]).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[A-Za-z0-9₀-₉⁰-⁹¹²³⁺⁻().,×\[\]\-+=→⇌°%\/^]+/g,'#').replace(/\s+/g,'').replace(/#+/g,'#').slice(0,70));
 // مخطط الامتحان الوزاري 2026 (50 فقرة بالترتيب): [الدرس، نمط السؤال، المستوى]
 const BP=[['u1l1','kmt_ex',1],['u1l1','gas_graph',2],['u1l1','gas_mix',2],['u1l2','xyz_order',3],['u1l2','cond_energy',1],['u1l3','solid_tbl',3],['u2l1','mix_tbl',3],['u2l2','colig_tbl',3],['u2l2','dtb_dtf',2],['u2l1','vitamin',1],['u2l1','cryst',2],['u3l1','eq_desc',1],['u3l1','eq_particles',3],['u3l1','',2],['u3l2','Kc_calc',2],['u3l2','K_meaning',2],['u4l1','arr_ex',1],['u4l1','conj_AB',3],['u4l2','pOH_strong',2],['u4l2','',1],['u4l3','acid_clues',3],['u4l3','base_moles',2],['u4l4','',1],['u4l3','base_tbl',3],['u4l3','acid_dir',3],['u4l4','',2],['u5l1','rate_eq',3],['u5l1','ct_avg',3],['u5l1','ct_inst',3],['u5l2','k_table',2],['u5l2','k_units',2],['u5l3','energy_fig',3],['u5l3','mb_fig',3],['u6l1','',1],['u6l1','H_count',2],['u6l1','e_ox',2],['u6l1','needs_agent',2],['u6l2','ion_order',3],['u6l2','gal_tbl',3],['u6l2','cell_nota',2],['u6l3','molten_ex',2],['u7l1','rx_type',1],['u7l1','grig_rev',3],['u7l1','elim_prod',2],['u7l1','ether',2],['u7l1','',1],['u7l1','',2],['u7l1','tubes',3],['u7l1','tubes',3],['u7l1','tubes',3]];
 const KIDX={};(QB.K||[]).forEach((k,i)=>KIDX[k]=i);const BPK=new Set(BP.filter(b=>b[1]).map(b=>KIDX[b[1]]));
-function pickBP(){const used=new Set(),usedK=new Set(),out=[];let tubeG=null;
+function pickBP(){const used=new Set(),usedK=new Set(),usedS=new Set(),out=[];let tubeG=null;const okS=x=>!usedS.has(SK(x));
  BP.forEach(([l,k,d])=>{let c=[];const ki=k?KIDX[k]:-1;
   if(k==='tubes'){if(!tubeG){const T=shuf(Q.filter(x=>x[1]===l&&KI(x)===ki));if(T.length){const f=JSON.stringify(T[0][8]);tubeG=T.filter(x=>JSON.stringify(x[8])===f)}}
    if(tubeG)c=tubeG.filter(x=>!used.has(x[0]))}
-  else if(k)c=Q.filter(x=>x[1]===l&&KI(x)===ki&&!used.has(x[0]));
-  if(!c.length)c=Q.filter(x=>x[1]===l&&x[2]===d&&!used.has(x[0])&&!usedK.has(KI(x))&&!BPK.has(KI(x)));
+  else if(k){c=Q.filter(x=>x[1]===l&&KI(x)===ki&&!used.has(x[0])&&okS(x));if(!c.length)c=Q.filter(x=>x[1]===l&&KI(x)===ki&&!used.has(x[0]))}
+  if(!c.length)c=Q.filter(x=>x[1]===l&&x[2]===d&&!used.has(x[0])&&!usedK.has(KI(x))&&!BPK.has(KI(x))&&okS(x));
+  if(!c.length)c=Q.filter(x=>x[1]===l&&!used.has(x[0])&&!usedK.has(KI(x))&&okS(x));
   if(!c.length)c=Q.filter(x=>x[1]===l&&x[2]===d&&!used.has(x[0])&&!usedK.has(KI(x)));
   if(!c.length)c=Q.filter(x=>x[1]===l&&!used.has(x[0])&&!usedK.has(KI(x)));
   if(!c.length)c=Q.filter(x=>x[1]===l&&!used.has(x[0]));
-  const q=k==='tubes'?c[0]:c[Math.floor(Math.random()*c.length)];if(q){used.add(q[0]);usedK.add(KI(q));out.push(q)}});return out}
+  const q=k==='tubes'?c[0]:c[Math.floor(Math.random()*c.length)];if(q){used.add(q[0]);usedK.add(KI(q));if(k!=='tubes')usedS.add(SK(q));out.push(q)}});return out}
 function pick(ls,n){const ord=UNITS.flatMap(u=>Object.keys(META[u].l));const P=Q.filter(x=>ls.includes(x[1]));
  const want={1:Math.round(n*.2),2:Math.round(n*.4)};want[3]=n-want[1]-want[2];
- const used=new Set(),usedK=new Set();let out=[];
+ const used=new Set(),usedK=new Set(),usedS=new Set();let out=[];
  [3,2,1].forEach(d=>{const per={};ls.forEach(l=>per[l]=shuf(P.filter(x=>x[1]===l&&x[2]===d)));let i=0,guard=0;
   while(out.filter(x=>x._d===d).length<want[d]&&guard<5000){guard++;const l=ls[i%ls.length];i++;const arr=per[l];if(!arr.length){if(ls.every(z=>!per[z].length))break;continue}
-   let j=arr.findIndex(x=>!usedK.has(KI(x))&&!used.has(x[0]));if(j<0)j=arr.findIndex(x=>!used.has(x[0]));if(j<0){per[l]=[];continue}const q=arr.splice(j,1)[0];used.add(q[0]);usedK.add(KI(q));out.push(Object.assign([],q,{_d:d}))}});
- if(out.length<n){const rest=shuf(P.filter(x=>!used.has(x[0])));rest.sort((a,b)=>(usedK.has(KI(a))?1:0)-(usedK.has(KI(b))?1:0));out=out.concat(rest.slice(0,n-out.length))}
+   let j=arr.findIndex(x=>!usedK.has(KI(x))&&!used.has(x[0])&&!usedS.has(SK(x)));if(j<0)j=arr.findIndex(x=>!used.has(x[0])&&!usedS.has(SK(x)));if(j<0){per[l]=[];continue}const q=arr.splice(j,1)[0];used.add(q[0]);usedK.add(KI(q));usedS.add(SK(q));out.push(Object.assign([],q,{_d:d}))}});
+ if(out.length<n){const rest=shuf(P.filter(x=>!used.has(x[0])));for(const x of rest){if(out.length>=n)break;if(usedS.has(SK(x)))continue;usedS.add(SK(x));used.add(x[0]);out.push(x)}}
  out=shuf(out).sort((a,b)=>ord.indexOf(a[1])-ord.indexOf(b[1]));return out.slice(0,n)}
 // ===== الرسوم =====
 const SV=(w,h,b)=>'<svg viewBox="0 0 '+w+' '+h+'" width="100%" style="max-width:'+w+'px" xmlns="http://www.w3.org/2000/svg" direction="ltr" font-family="Cairo,Tahoma,sans-serif">'+b+'</svg>';
@@ -102,8 +105,13 @@ function fig(f){if(!f)return '';let h='';
   return '<div class="qb-fig">'+SV(W,H,b)+'</div>'}
  return ''}
 function qHTML(q){return '<div class="tx">'+hl(q[3],'q')+'</div>'+fig(q[8])}
-function render(){const p=$('twp');if(!p)return;if(S.view==='setup')setup(p);else if(S.view==='exam')exam(p);else result(p)}
-function hero(){return '<div class="qb-hero"><h2 class="qb-h">🎓 بنك أسئلة الكيمياء — الثاني الثانوي (التوجيهي)</h2><p>'+Q.length.toLocaleString('en')+' سؤالًا على نمط الامتحان الوزاري 2026، مرتبة حسب الكتاب المدرسي ومعتمدة على مكثف اللوبيتال، وفيها جداول ورسوم بيانية للتحليل والاستنتاج. اختر امتحانك بالدرس أو الوحدة أو وحدات مختارة أو المادة كاملة (50 فقرة بتوزيع الوزاري)، وكل امتحان مدرّج: 20% سهل، 40% متوسط، 40% قدرات عليا؛ وعند الانتهاء تظهر علامتك وتصحيح مفصّل مع شرح لكل سؤال، وتُمنح شهادة تقدير للمتميزين.</p><div class="qb-badges"><span>'+Q.length.toLocaleString('en')+' سؤال</span><span>7 وحدات · 18 درسًا</span><span>مخطط الوزاري 2026 (50 فقرة)</span><span>جداول ورسوم للتحليل</span><span>مؤقت للامتحان</span><span>إعداد الأستاذ يوسف القاق</span></div></div>'}
+// أسئلة الشكل المشترك (مثل الأنابيب): يُعرض نص المقدمة والشكل مرة واحدة فقط
+const TUBK=KIDX['tubes'];
+function qHTMLi(qs,i){const q=qs[i];if(i>0&&KI(q)===TUBK){let s=i;while(s>0&&KI(qs[s-1])===TUBK&&JSON.stringify(qs[s-1][8])===JSON.stringify(q[8]))s--;const k=String(q[3]).indexOf('المجاور:');if(s<i&&k>0)return '<span class="qb-gnote">📎 اعتمادًا على الشكل في السؤال '+(s+1)+'</span><div class="tx">'+hl(q[3].slice(k+8).trim(),'q')+'</div>'}return qHTML(q)}
+function fitEq(root){(root||document).querySelectorAll('.qb-eq').forEach(e=>{e.style.fontSize='';const w=e.clientWidth,sw=e.scrollWidth;if(w>20&&sw>w+1){const f=parseFloat(getComputedStyle(e).fontSize)||15;e.style.fontSize=Math.max(9,Math.floor(f*w/sw*0.97*10)/10)+'px'}})}
+addEventListener('resize',()=>{clearTimeout(fitEq._t);fitEq._t=setTimeout(()=>{const p=document.getElementById('twp');if(p)fitEq(p)},150)});
+function render(){const p=$('twp');if(!p)return;if(S.view==='setup')setup(p);else if(S.view==='exam')exam(p);else result(p);requestAnimationFrame(()=>fitEq(p));setTimeout(()=>fitEq(p),400)}
+function hero(){return '<div class="qb-hero"><h2 class="qb-h">🎓 بنك أسئلة الكيمياء — الثاني الثانوي (التوجيهي)</h2><p>'+Q.length.toLocaleString('en')+' سؤالًا على نمط الامتحان الوزاري 2026، مرتبة حسب الكتاب المدرسي ومعتمدة على مكثف اللوبيتال، وفيها جداول ورسوم بيانية للتحليل والاستنتاج. اختر امتحانك بالدرس أو الوحدة أو وحدات مختارة أو المادة كاملة (50 فقرة بتوزيع الوزاري)، وعند الانتهاء تظهر علامتك وتصحيح مفصّل مع شرح لكل سؤال، وتُمنح شهادة تقدير للمتميزين.</p><div class="qb-badges"><span>'+Q.length.toLocaleString('en')+' سؤال</span><span>7 وحدات · 18 درسًا</span><span>مخطط الوزاري 2026 (50 فقرة)</span><span>جداول ورسوم للتحليل</span><span>مؤقت للامتحان</span><span>إعداد الأستاذ يوسف القاق</span></div></div>'}
 function setup(p){const nAvail=Q.filter(x=>pool().includes(x[1])).length;
  let h='<div class="qb-top"><button class="qb-btn" id="qbHome">→ رجوع إلى القائمة السابقة</button></div>'+hero()+'<div class="qb-card"><h3 class="qb-h">① بيانات الطالب</h3><div class="qb-row"><input id="qbName" class="qb-in" maxlength="60" placeholder="اسم الطالب الرباعي (يظهر على النتيجة والشهادة)" value="'+esc(S.name)+'"><input id="qbCls" class="qb-in" style="max-width:260px" maxlength="40" placeholder="المدرسة أو الشعبة (اختياري)" value="'+esc(S.cls)+'"></div><div class="qb-err" id="qbErr"></div></div>';
  h+='<div class="qb-card"><h3 class="qb-h">② نطاق الامتحان</h3><div class="qb-seg" id="qbScope">'+[['lesson','بالدرس'],['unit','بالوحدة'],['units','وحدات مختارة'],['all','المادة كاملة']].map(a=>'<button data-s="'+a[0]+'" class="'+(S.scope===a[0]?'on':'')+'">'+a[1]+'</button>').join('')+'</div>';
@@ -113,7 +121,6 @@ function setup(p){const nAvail=Q.filter(x=>pool().includes(x[1])).length;
  else h+='<p class="qb-note" style="margin:10px 0 0">جميع الوحدات السبع ('+Q.length.toLocaleString('en')+' سؤال) — يُسحب الامتحان موزعًا على الدروس بالترتيب.</p>';
  if(S.scope!=='all')h+='<div class="qb-lbl">عدد الأسئلة</div><div class="qb-seg" id="qbN">'+[10,20,30,50].map(n=>'<button data-n="'+n+'" class="'+(S.n===n?'on':'')+'">'+n+'</button>').join('')+'</div>';
  else h+='<div class="qb-ex" style="margin-top:12px">📋 امتحان المادة كاملة يُبنى على مخطط الامتحان الوزاري 2026: <b>50 فقرة</b> بالترتيب نفسه وبعدد الأسئلة نفسه لكل موضوع، وبالأنماط نفسها (جداول ورسوم وأسئلة تحليل). الفقرتان المتعلقتان بالمعايرة والمحلول المنظم وتحضير المركبات العضوية استُبدلت بفقرات من الدرس نفسه لاستثنائها.</div>';
- h+='<div class="qb-lbl">مستويات الصعوبة في كل امتحان</div><div class="qb-row"><span class="lv lv1" style="border-radius:999px;padding:4px 12px;font-weight:800;font-size:12.5px">20% سهل ومباشر</span><span class="lv lv2" style="border-radius:999px;padding:4px 12px;font-weight:800;font-size:12.5px">40% متوسط وتحليل واستنتاج</span><span class="lv lv3" style="border-radius:999px;padding:4px 12px;font-weight:800;font-size:12.5px">40% قدرات عليا</span></div>';
  h+='<div class="qb-lbl">مدة الامتحان (دقيقة)</div><div class="qb-row"><input id="qbMin" class="qb-in" type="number" min="5" max="240" style="max-width:140px" value="'+S.min+'"><span class="qb-note">تُحسب تلقائيًا كما في الامتحان الوزاري (50 فقرة في ساعتين)، ويمكنك تعديلها.</span></div>';
  h+='<div class="qb-row" style="margin-top:16px"><button class="qb-go" id="qbStart">▶ ابدأ الامتحان</button><span class="qb-note">الأسئلة المتاحة في هذا النطاق: <b>'+nAvail+'</b></span></div></div>';
  const R=recs();const best={};R.filter(r=>r.pct>=85).forEach(r=>{const k=r.name.trim();if(!best[k]||best[k].pct<r.pct)best[k]=r});const top=Object.values(best).sort((a,b)=>b.pct-a.pct);
@@ -142,7 +149,7 @@ function tick(){const ft=$('qbFT');if(!EX||S.view!=='exam'){clearInterval(timerI
  let f=ft;if(!f){f=document.createElement('div');f.id='qbFT';f.className='qb-ftimer';document.body.appendChild(f)}f.textContent='⏱ '+mmss(l);f.classList.toggle('low',l<=120);const tw=$('tw');f.style.display=(tw&&tw.style.display!=='none')?'':'none';if(l<=0){clearInterval(timerId);submit(true)}}
 function exam(p){const n=EX.qs.length;let h='<div class="qb-bar"><div><div class="nm">👤 '+esc(EX.name)+'</div><div class="sc">'+esc(EX.scope)+' · '+n+' سؤالًا</div></div><button class="qb-btn" id="qbQuit" style="padding:7px 12px">↩ خروج</button><div class="qb-timer" id="qbT">⏱ '+mmss(left())+'</div><div class="qb-prog"><i id="qbPr"></i></div></div>';
  h+='<div class="qb-nav" id="qbNav">'+EX.qs.map((q,i)=>'<a href="#qbq'+i+'" data-i="'+i+'">'+(i+1)+'</a>').join('')+'</div>';
- h+=EX.qs.map((q,i)=>'<div class="qb-q" id="qbq'+i+'"><div class="hd"><span class="num">السؤال '+(i+1)+'</span><span class="lv lv'+q[2]+'">'+['','سهل ومباشر','متوسط/تحليل','قدرات عليا'][q[2]]+'</span><span>'+esc(lessonName(q[1]))+'</span></div>'+qHTML(q)+'<div class="qb-ops">'+q[4].map((o,j)=>'<button class="qb-op" data-q="'+i+'" data-o="'+j+'"><span class="lt">'+LT[j]+'</span><span>'+optHTML(o)+'</span></button>').join('')+'</div></div>').join('');
+ h+=EX.qs.map((q,i)=>'<div class="qb-q" id="qbq'+i+'"><div class="hd"><span class="num">السؤال '+(i+1)+'</span><span>'+esc(lessonName(q[1]))+'</span></div>'+qHTMLi(EX.qs,i)+'<div class="qb-ops">'+q[4].map((o,j)=>'<button class="qb-op" data-q="'+i+'" data-o="'+j+'"><span class="lt">'+LT[j]+'</span><span>'+optHTML(o)+'</span></button>').join('')+'</div></div>').join('');
  h+='<div class="qb-card" style="text-align:center"><div class="qb-err" id="qbSubErr"></div><button class="qb-go" id="qbSub">✔ إنهاء الامتحان وعرض النتيجة</button></div>';p.innerHTML=h;
  p.querySelectorAll('.qb-op').forEach(b=>b.onclick=()=>{const i=+b.dataset.q,j=+b.dataset.o;EX.ans[i]=j;b.parentNode.querySelectorAll('.qb-op').forEach(x=>x.classList.toggle('sel',x===b));upd()});
  $('qbNav').onclick=e=>{const a=e.target.closest('a');if(!a)return;e.preventDefault();const el=$('qbq'+a.dataset.i);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})};
@@ -160,7 +167,7 @@ function result(p){const n=EX.qs.length,ok=EX.score,un=EX.qs.filter((q,i)=>EX.an
  h+='<div class="qb-row" style="margin-top:14px">'+(pc>=85?'<button class="qb-go" id="qbCert">🏅 شهادة التقدير PDF</button><button class="qb-btn" id="qbCertImg">🖼️ الشهادة كصورة</button>':'<span class="qb-note">تُمنح شهادة التقدير عند تحقيق 85% فأكثر — راجع الأخطاء وحاول مرة أخرى.</span>')+'<button class="qb-btn" id="qbAgain">↻ امتحان جديد بالإعدادات نفسها</button><button class="qb-btn" id="qbBack">↩ رجوع إلى إعدادات الامتحان</button><button class="qb-btn" id="qbHome2">🏠 القائمة الرئيسية</button></div></div>';
  h+='<div class="qb-card"><h3 class="qb-h">مراجعة الإجابات مع الشرح</h3><div class="qb-seg" id="qbF">'+[['bad','الخاطئة ودون إجابة ('+(bad+un)+')'],['ok','الصحيحة ('+ok+')'],['all','الكل ('+n+')']].map(a=>'<button data-f="'+a[0]+'" class="'+(S.filter===a[0]?'on':'')+'">'+a[1]+'</button>').join('')+'</div><div class="qb-nav" style="margin-top:12px">'+EX.qs.map((q,i)=>{const a=EX.ans[i];return '<a href="#qbr'+i+'" class="'+(a===undefined?'na':a===q[5]?'ok':'bad')+'">'+(i+1)+'</a>'}).join('')+'</div>';
  EX.qs.forEach((q,i)=>{const a=EX.ans[i],st=a===undefined?'na':a===q[5]?'ok':'bad';if(S.filter==='bad'&&st==='ok')return;if(S.filter==='ok'&&st!=='ok')return;
-  h+='<div class="qb-q" id="qbr'+i+'"><div class="hd"><span class="num" style="background:'+(st==='ok'?'var(--qb-ok)':st==='bad'?'var(--qb-bad)':'#7a8499')+'">السؤال '+(i+1)+'</span><span>'+(st==='ok'?'✔ إجابة صحيحة':st==='bad'?'✖ إجابة خاطئة':'○ لم تُجب')+'</span><span>· '+esc(lessonName(q[1]))+'</span></div>'+qHTML(q)+'<div class="qb-ops">'+q[4].map((o,j)=>'<div class="qb-op '+(j===q[5]?'ok':(j===a?'bad':''))+'"><span class="lt">'+LT[j]+'</span><span>'+optHTML(o)+'</span></div>').join('')+'</div><div class="qb-ex"><b class="t">💡 الإجابة الصحيحة ('+LT[q[5]]+'):</b> '+(String(q[4][q[5]])[0]==='§'?'الشكل ('+LT[q[5]]+')':hl(q[4][q[5]],'o'))+(q[6]?'<br>'+hl(q[6],'e'):'')+'</div></div>'});
+  h+='<div class="qb-q" id="qbr'+i+'"><div class="hd"><span class="num" style="background:'+(st==='ok'?'var(--qb-ok)':st==='bad'?'var(--qb-bad)':'#7a8499')+'">السؤال '+(i+1)+'</span><span>'+(st==='ok'?'✔ إجابة صحيحة':st==='bad'?'✖ إجابة خاطئة':'○ لم تُجب')+'</span><span>· '+esc(lessonName(q[1]))+'</span></div>'+qHTMLi(EX.qs,i)+'<div class="qb-ops">'+q[4].map((o,j)=>'<div class="qb-op '+(j===q[5]?'ok':(j===a?'bad':''))+'"><span class="lt">'+LT[j]+'</span><span>'+optHTML(o)+'</span></div>').join('')+'</div><div class="qb-ex"><b class="t">💡 الإجابة الصحيحة ('+LT[q[5]]+'):</b> '+(String(q[4][q[5]])[0]==='§'?'الشكل ('+LT[q[5]]+')':hl(q[4][q[5]],'o'))+(q[6]?'<br>'+hl(q[6],'e'):'')+'</div></div>'});
  h+='</div>';p.innerHTML=h;
  $('qbF').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;S.filter=b.dataset.f;render()};
  $('qbAgain').onclick=()=>{S.name=EX.name;start()};$('qbBack').onclick=()=>{S.view='setup';render()};$('qbHome2').onclick=()=>{S.view='setup';go('home')};
