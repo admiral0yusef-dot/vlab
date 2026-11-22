@@ -52,7 +52,7 @@
 
   /* ---------- الخريطة المصغرة ---------- */
   U.minimap = function (G, big) {
-    var cv = $('mini'), W = JG.World, S = G.save, s = big ? Math.min(innerWidth, innerHeight) * .82 : (innerWidth < 640 ? 112 : 150), dpr = Math.min(2, devicePixelRatio || 1);
+    var cv = $('mini'), W = JG.World, S = G.save, s = big ? Math.min(innerWidth, innerHeight) * .82 : Math.max(78, Math.round(150 * (window.JG_HS || 1))), dpr = Math.min(2, devicePixelRatio || 1);
     if (cv._s !== s * dpr) { cv._s = s * dpr; cv.width = cv.height = s * dpr; cv.style.width = cv.style.height = s + 'px'; }
     var x = cv.getContext('2d'), k = cv.width / W.MW; x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cv.width, cv.height); x.fillStyle = 'rgba(7,10,22,.82)'; x.fillRect(0, 0, cv.width, cv.height);
     var oy = (cv.height - W.MH * k) / 2;

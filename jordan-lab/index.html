@@ -76,7 +76,7 @@ body.touch-on #atom .bub{font-size:12.5px;line-height:1.65}body.touch-on #atom .
 body.touch-on #tool{left:max(10px,env(safe-area-inset-left));transform:scale(.85);transform-origin:left bottom;bottom:max(8px,env(safe-area-inset-bottom))}
 body.touch-on #pauseBtn{left:max(12px,env(safe-area-inset-left));transform:none;top:max(136px,calc(env(safe-area-inset-top) + 128px))}
 @media(orientation:landscape){body.touch-on #atom{right:auto;left:max(130px,calc(env(safe-area-inset-left) + 124px));top:max(96px,calc(env(safe-area-inset-top) + 88px))}body.touch-on #pauseBtn{top:max(130px,calc(env(safe-area-inset-top) + 122px))}}
-@media(max-height:460px){.tb{width:54px;height:54px;font-size:11px}.tb span{font-size:18px}.tbs{grid-template-columns:repeat(3,54px);gap:7px}#tbFire{width:62px;height:62px}#obj{top:max(12px,env(safe-area-inset-top))!important;right:250px!important;max-width:calc(100vw - 430px)!important;left:auto!important;font-size:12px!important}}
+
 /* لافتات */
 #banner{position:fixed;top:24%;left:50%;transform:translate(-50%,-50%);z-index:20;text-align:center;pointer-events:none;opacity:0}
 #banner.on{animation:bn 3.2s ease forwards}#banner b{display:block;font:900 clamp(30px,6vw,64px) var(--disp);color:#fff;text-shadow:0 0 28px var(--bc),0 4px 0 #0008}
@@ -175,7 +175,21 @@ body::before{top:0}body::after{bottom:0}body.cine::before,body.cine::after{heigh
 .tree details{margin-right:12px}.tree summary{cursor:pointer;font-weight:800;padding:4px 0}.tu{margin:6px 14px;font-size:13.5px}.tu ul{margin:4px 0;padding-right:18px;line-height:1.9}.tu em{display:block;font-size:12px;color:var(--mut)}
 .fmt code{background:#0b1226;padding:1px 5px;border-radius:5px}
 @media(max-width:640px){.stat{min-width:0;flex:1;padding:7px 9px}.lv{width:32px;height:32px;font-size:15px}#obj{max-width:calc(100vw - 24px);left:max(12px,env(safe-area-inset-left));font-size:12.5px}#boss{width:76vw}.sc{font-size:15px}}
+
+/* حجم واجهة اللعب يتناسب مع الشاشة: --hs بين 0.58 و1.1 (يحسب في السكربت أدناه) */
+:root{--hs:1;--bs:1}
+.stat,#pauseBtn,#boss{zoom:var(--hs)}.tbs,#tool,#atom{zoom:var(--bs,1)}
+#obj{font-size:max(11px,calc(13.5px * var(--hs)));padding:calc(8px * var(--hs)) calc(12px * var(--hs));top:max(calc(84px * var(--hs)),calc(env(safe-area-inset-top) + 74px * var(--hs)))}
+#prompt{font-size:max(11px,calc(13.5px * var(--hs)));padding:calc(6px * var(--hs)) calc(12px * var(--hs))}
+#joyB{transform:scale(var(--hs));transform-origin:center}
+@media(orientation:landscape) and (max-height:520px){
+ #obj{top:max(8px,env(safe-area-inset-top))!important;right:calc(max(12px,env(safe-area-inset-right)) + 232px * var(--hs) + 10px)!important;left:auto!important;max-width:calc(100vw - 232px * var(--hs) - 175px * var(--hs) - 64px)!important}
+ body.touch-on #atom{left:calc(28px / var(--bs) + 150px * var(--hs) / var(--bs));right:auto;top:calc(16px / var(--bs));max-width:calc(46vw / var(--bs))}
+ body.touch-on #pauseBtn{left:calc(12px / var(--hs));top:calc(110px / var(--hs) + 150px)}
+}
+@media(orientation:portrait) and (max-width:640px){#obj{top:calc(max(10px,env(safe-area-inset-top)) + 96px * var(--hs))}body.touch-on #atom{top:calc((max(10px,env(safe-area-inset-top)) + 150px * var(--hs)) / var(--bs));right:calc(12px / var(--bs));max-width:calc(84vw / var(--bs))}body.touch-on #pauseBtn{left:calc(12px / var(--hs));top:calc(max(10px,env(safe-area-inset-top)) / var(--hs) + 150px)}}
 </style>
+<script>(function(){function f(){var w=innerWidth,h=innerHeight,k=Math.min(w/1180,h/760),t=Math.max(.58,Math.min(1.1,w<h?Math.max(k,w/620):k));document.documentElement.style.setProperty("--hs",t.toFixed(3));document.documentElement.style.setProperty("--bs",Math.max(.8,Math.min(1.05,t*1.15)).toFixed(3));window.JG_HS=t}f();addEventListener("resize",f);addEventListener("orientationchange",function(){setTimeout(f,250)})})()</script>
 </head>
 <body>
 <canvas id="cv" tabindex="0" aria-label="ساحة اللعب ثلاثية الأبعاد"></canvas>
