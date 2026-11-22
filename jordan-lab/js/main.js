@@ -556,6 +556,7 @@
       case 'quit': G.persist(); G.mode = 'title'; G.paused = false; A.track('title'); U.screen('title', G); $('hud').hidden = true; break;
       case 'expJSON': G.exportReport('json'); break; case 'expCSV': G.exportReport('csv'); break;
       case 'respawn': G.respawn(); break;
+      case 'site': G.persist(); location.href = '/'; break;
       case 'freeplay': G.mode = 'play'; G.paused = false; U.screen(null); break;
     }
   };

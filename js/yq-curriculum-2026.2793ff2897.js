@@ -212,6 +212,18 @@ QBank('c_diet',[['أي مجموعة نتناول منها أكبر عدد من �
 QBank('c_displace',[['كيف نقيس حجم حجر غير منتظم الشكل؟','بإزاحة الماء في مخبار مدرّج','بالمسطرة فقط','بالميزان'],['ارتفع الماء من 40 mL إلى 52 mL، فحجم الجسم:','12 cm³','52 cm³','92 cm³'],['1 mL يساوي:','1 cm³','1 m³','1 L']]);
 QBank('c_candle',[['انصهار الشمع تغيّر:','فيزيائي','كيميائي','نووي'],['احتراق الشمعة تغيّر كيميائي لأنه:','تتكون مواد جديدة','يتغير الشكل فقط','يمكن إرجاعه بسهولة'],['من نواتج احتراق الشمعة:','ثاني أكسيد الكربون وبخار الماء','الحديد','الملح']]);
 
+/* دراجة هوائية مرسومة بالمتجهات: تتجه يميناً، والعجلات والدواسات تدور مع اتجاه الحركة */
+function QBike(x,gy,a,sp){const R=15,rx=x-22,fx=x+24,wy=gy-R,bx=x-1,by=wy+2,sx=x-8,sy=wy-24,hx=x+16,hy=wy-26;cx.save();cx.lineCap='round';cx.lineJoin='round';
+ for(const wx of [rx,fx]){cx.strokeStyle='#1f2937';cx.lineWidth=3.2;cx.beginPath();cx.arc(wx,wy,R,0,7);cx.stroke();cx.strokeStyle='#94a3b8';cx.lineWidth=.9;for(let k=0;k<6;k++){const q=a+k*Math.PI/3;cx.beginPath();cx.moveTo(wx,wy);cx.lineTo(wx+Math.cos(q)*R,wy+Math.sin(q)*R);cx.stroke()}cx.fillStyle='#475569';cx.beginPath();cx.arc(wx,wy,2,0,7);cx.fill()}
+ cx.strokeStyle='#dc2626';cx.lineWidth=3;cx.beginPath();cx.moveTo(rx,wy);cx.lineTo(bx,by);cx.lineTo(hx-2,hy+6);cx.lineTo(sx,sy+3);cx.lineTo(bx,by);cx.moveTo(rx,wy);cx.lineTo(sx,sy+3);cx.moveTo(hx-2,hy+6);cx.lineTo(fx,wy);cx.stroke();
+ cx.strokeStyle='#111827';cx.lineWidth=2.4;cx.beginPath();cx.moveTo(hx-2,hy+6);cx.lineTo(hx,hy);cx.lineTo(hx+6,hy-1);cx.stroke();cx.fillStyle='#111827';cx.fillRect(sx-6,sy-1,11,3);
+ const ca=a*.8,p1=[bx+Math.cos(ca)*6,by+Math.sin(ca)*6],p2=[bx-Math.cos(ca)*6,by-Math.sin(ca)*6];
+ const hip=[sx,sy-3],sh=[sx+9,sy-22],hand=[hx+4,hy];
+ const leg=(p,c)=>{const dx=p[0]-hip[0],dy=p[1]-hip[1],d=Math.hypot(dx,dy),L=14,h=Math.sqrt(Math.max(0,L*L-d*d/4)),mx=hip[0]+dx/2+(-dy/d)*h*-1,my=hip[1]+dy/2+(dx/d)*h*-1;cx.strokeStyle=c;cx.lineWidth=3.6;cx.beginPath();cx.moveTo(hip[0],hip[1]);cx.lineTo(mx,my);cx.lineTo(p[0],p[1]);cx.stroke()};
+ leg(p2,'#1e40af');cx.strokeStyle='#374151';cx.lineWidth=1.6;cx.beginPath();cx.moveTo(p1[0],p1[1]);cx.lineTo(p2[0],p2[1]);cx.stroke();
+ cx.strokeStyle='#0ea5e9';cx.lineWidth=5;cx.beginPath();cx.moveTo(hip[0],hip[1]);cx.lineTo(sh[0],sh[1]);cx.stroke();cx.lineWidth=2.6;cx.strokeStyle='#f0c19a';cx.beginPath();cx.moveTo(sh[0],sh[1]);cx.lineTo(hand[0],hand[1]);cx.stroke();
+ cx.fillStyle='#f0c19a';cx.beginPath();cx.arc(sh[0]+4,sh[1]-7,5.5,0,7);cx.fill();cx.fillStyle='#f59e0b';cx.beginPath();cx.arc(sh[0]+3.5,sh[1]-9,6,Math.PI,0);cx.fill();
+ leg(p1,'#2563eb');if(sp>0){cx.strokeStyle='rgba(15,23,42,.25)';cx.lineWidth=1.2;for(let k=0;k<3;k++){cx.beginPath();cx.moveTo(rx-R-6-k*6,wy-8+k*7);cx.lineTo(rx-R-14-k*6,wy-8+k*7);cx.stroke()}}cx.restore()}
 /* ===== تجارب الصفوف 5–7 ===== */
 Object.assign(S,{
 /* ---------- الصف الخامس ---------- */
@@ -346,7 +358,7 @@ c_solub:{c:[R('s',QL('المذاب',['ملح الطعام NaCl','سكر','نتر
   if(ex>0){for(let i=0;i<Math.min(60,ex/2);i++){cx.fillStyle='#f8fafc';cx.fillRect(90+(i*23)%150,258-(Math.floor(i/7))*5,4,4)}}Qgraph(290,30,340,230,Array.from({length:21},(_,i)=>[i*5,fs(i*5)]),{xm:100,ym:fs(100)*1.05,dot:[v.T,fs(v.T)],t:'منحنى الذائبية',xl:'°C',c:'#a78bfa'});
   return 'الذائبية عند '+v.T+' °C = '+sol.toFixed(1)+' g/100 g ماء. '+(ex>0?'المحلول مشبع وترسب '+ex.toFixed(0)+' g.':'المحلول غير مشبع.')+' تزداد ذائبية معظم المواد الصلبة بارتفاع الحرارة.'}},
 c_speed:{c:[R('d','المسافة (m)',10,200,10,100),R('tt','الزمن (s)',2,40,1,20)],
- f(v,t){Qsky('#bae6fd','#f0f9ff',230);Qground(230,'#94a3b8','#475569');const sp=v.d/v.tt,ph=(t%(v.tt/4+1))/(v.tt/4),x=40+Cl(ph,0,1)*400;cx.strokeStyle='#fff';cx.setLineDash([10,10]);cx.beginPath();cx.moveTo(40,240);cx.lineTo(440,240);cx.stroke();cx.setLineDash([]);Qemo('🚲',x,210,44);QT('0',40,265,'#0f172a',11);QT(v.d+' m',440,265,'#0f172a',11);
+ f(v,t){Qsky('#bae6fd','#f0f9ff',230);Qground(230,'#94a3b8','#475569');const sp=v.d/v.tt,ph=(t%(v.tt/4+1))/(v.tt/4),x=40+Cl(ph,0,1)*400;cx.strokeStyle='#fff';cx.setLineDash([10,10]);cx.beginPath();cx.moveTo(40,240);cx.lineTo(440,240);cx.stroke();cx.setLineDash([]);QBike(x,238,(x-40)/15,sp);QT('0',40,265,'#0f172a',11);QT(v.d+' m',440,265,'#0f172a',11);
   Qgraph(460,30,170,170,[[0,0],[v.tt,v.d]],{xm:40,ym:200,dot:[v.tt*Cl(ph,0,1),v.d*Cl(ph,0,1)],t:'المسافة–الزمن',xl:'s'});Qpanel(460,210,170,50);QT('v = '+sp.toFixed(2)+' m/s',545,240,'#fde68a',13);
   return 'السرعة المتوسطة = المسافة ÷ الزمن = '+v.d+' ÷ '+v.tt+' = '+sp.toFixed(2)+' m/s.'}},
 c_forces:{c:[R('a','قوة الفريق الأيسر (N)',0,500,10,300),R('b','قوة الفريق الأيمن (N)',0,500,10,300)],
@@ -3303,8 +3315,19 @@ QBank('g12_fission',[['وظيفة قضبان التحكم في المفاعل ا
  S.g12_enzyme={c:[R('k',QL('الإنزيم',EN.map(e=>e[0])),0,3,1,1),R('T','درجة الحرارة (°C)',0,80,1,37),R('p','الرقم الهيدروجيني pH',1,14,.5,7),R('s','تركيز المادة المتفاعلة (mM)',0,100,1,40),R('i',QL('المثبّط',['بدون','تنافسي','غير تنافسي']),0,2,1,0)],
  f(v,t){t=Math.abs(+t||0);const e=EN[v.k|0],fT=Math.exp(-Math.pow(v.T-e[2],2)/(2*Math.pow(v.T<e[2]?13:6,2))),fp=Math.exp(-Math.pow(v.p-e[1],2)/(2*1.3*1.3)),Km=10*(v.i==1?3:1),Vm=100*(v.i==2?.4:1),r0=s=>Vm*s/(Km+s)*fT*fp,rate=r0(v.s),den=v.T>e[2]+14;Qbg('#0f1c2e','#060c16');
   Qchart(14,58,372,128,{title:'سرعة التفاعل مقابل تركيز المادة المتفاعلة',x0:0,x1:100,y0:0,y1:105,xl:'[S] (mM)',fn:[{f:s=>100*s/(10+s)*fT*fp,c:'#64748b',w:1.4,dash:[4,3]},{f:r0,c:'#38bdf8',w:2.2}],series:[{d:[[v.s,rate]],c:'#fde047',dots:1,r:4.5}]});
-  for(let i=0;i<4;i++){const x=60+i*92,y=250,wob=den?Math.sin(t*3+i)*3:0;cx.beginPath();if(den){cx.ellipse(x,y,24+wob,15-wob,i,0,7)}else{cx.arc(x,y,22,.5,5.8);cx.lineTo(x+6,y)}cx.closePath();cx.fillStyle=den?'#78716c':'#16a34a';cx.fill();cx.strokeStyle='#bbf7d0';cx.lineWidth=1.2;cx.stroke();
-   const busy=!den&&(i<Math.round(rate/25)),p=(t*(.3+rate/120)+i*.3)%1;if(v.i==1&&i%2===0&&!den){G12poly([[x+8,y-7],[x+22,y],[x+8,y+7]],'#f43f5e');QT('مثبّط',x+12,y-20,'#fda4af',8)}else if(busy){const sx=x+60-p*46;G12poly([[sx,y-7],[sx+14,y],[sx,y+7]],'#fde047')}if(v.i==2&&!den){Qball(x-16,y+16,5,'#f43f5e')}}
+  /* نموذج القفل والمفتاح: الموقع النشط تجويف مثلثي، والمادة المتفاعلة مثلث مطابق رأسه داخل التجويف */
+  for(let i=0;i<4;i++){const x=60+i*92,y=250,wob=den?Math.sin(t*3+i)*3:0,nc=v.i==2&&!den;cx.beginPath();
+   if(den){cx.ellipse(x,y,24+wob,15-wob,i,0,7)}else if(nc){cx.arc(x,y,22,.3,5.98);cx.lineTo(x+13,y-3);cx.lineTo(x+13,y+3)}else{cx.arc(x,y,22,.5,5.78);cx.lineTo(x+5,y)}
+   cx.closePath();cx.fillStyle=den?'#78716c':'#16a34a';cx.fill();cx.strokeStyle='#bbf7d0';cx.lineWidth=1.2;cx.stroke();
+   const sub=(sx,yy,c)=>G12poly([[sx+15,yy-8],[sx,yy],[sx+15,yy+8]],c);
+   const busy=!den&&(i<Math.max(1,Math.round(rate/25))),p=(t*(.25+rate/150)+i*.27)%1;
+   if(v.i==1&&i%2===0&&!den){sub(x+6,y,'#f43f5e');QT('مثبّط',x+14,y-20,'#fda4af',8)}
+   else if(den){const sx=x+40+Math.sin(t*2+i)*6;sub(sx,y-4,'#fde047')}
+   else if(nc){const k=p<.5?p*2:2-p*2,sx=x+56-k*30;sub(sx,y,'#fde047');if(k>.9)QT('لا يتطابق',x+28,y-20,'#fde047',7.5);Qball(x-16,y+16,5.5,'#f43f5e');QT('مثبّط',x-16,y+31,'#fda4af',7.5)}
+   else if(busy){if(p<.45){sub(x+58-p/.45*52,y,'#fde047')}else if(p<.72){sub(x+6,y,'#fde047');cx.strokeStyle='rgba(253,224,71,.55)';cx.lineWidth=2;cx.beginPath();cx.arc(x+8,y,26,0,7);cx.stroke()}
+    else{const k=(p-.72)/.28;G12poly([[x+21+k*32,y-8-k*16],[x+6+k*32,y-k*16],[x+21+k*32,y-k*16]],'#fb923c');G12poly([[x+21+k*32,y+k*16],[x+6+k*32,y+k*16],[x+21+k*32,y+8+k*16]],'#fb923c')}}
+   else{sub(x+70+Math.sin(t+i)*4,y,'#fde047')}}
+  QT('الأخضر: الإنزيم · الأصفر: المادة المتفاعلة · البرتقالي: النواتج',200,212,'#cbd5e1',8.5);
   QT(den?'الإنزيم تغيّرت طبيعته (تمسّخ) بالحرارة العالية':'الموقع النشط يرتبط بالمادة المتفاعلة (القفل والمفتاح)',200,296,den?'#fca5a5':'#bbf7d0',9.5);
   G12P(e[0],[['سرعة التفاعل',rate.toFixed(0)+' %','#86efac'],['أثر الحرارة',(fT*100).toFixed(0)+' %'],['أثر pH',(fp*100).toFixed(0)+' %'],['الظروف المثلى','pH '+e[1]+' · '+e[2]+' °C']],['تزداد السرعة بزيادة تركيز المادة المتفاعلة حتى تتشبع المواقع النشطة. الحرارة العالية تغيّر شكل الإنزيم فيفقد نشاطه، ولكل إنزيم pH أمثل.','المثبّط التنافسي يشبه المادة المتفاعلة ويتنافس معها على الموقع النشط؛ يمكن التغلب عليه بزيادة تركيز المادة المتفاعلة.','المثبّط غير التنافسي يرتبط بموقع آخر فيغيّر شكل الموقع النشط؛ يقلل السرعة القصوى ولا تعالجه زيادة المادة المتفاعلة.'][v.i|0]);
   return `${e[0]} عند ${v.T} °C وpH ${v.p} وتركيز ${v.s} mM${v.i>0?' بوجود مثبّط '+['','تنافسي','غير تنافسي'][v.i|0]:''}: سرعة التفاعل ${rate.toFixed(0)}% من القصوى. ${den?'تمسّخ الإنزيم بالحرارة.':''}`}};
