@@ -2603,9 +2603,9 @@ function one(q,res){var top=res[0],D=top.d,h='',x='';
  return {h:h,x:x}}
 var prior=typeof window.yqAskScience==='function'?window.yqAskScience:null;
 function priorAns(q){if(!prior)return'';try{var p=prior(q);if(typeof p==='string'&&p&&!/المجال الأقرب لسؤالك|يمكن تناول سؤالك|سأفسر السؤال ضمن|أرسل المصطلح|اكتب المصطلح/.test(p))return p.split('\n\nسياق المختبر الحالي')[0]}catch(e){}return''}
-function brain(q){load();var raw=String(q||'').trim(),n=nz(raw);if(!raw)return {h:'اكتب سؤالك العلمي.',x:''};
+function core(q){load();var raw=String(q||'').trim(),n=nz(raw);if(!raw)return {h:'اكتب سؤالك العلمي.',x:''};
  if(/^[\d\s.+\-*\/=()?]+$/.test(raw)){var pa=priorAns(raw);if(pa)return {h:'<p>'+esc(pa)+'</p>',x:pa}}
- if(/^(مرحبا|اهلا|السلام عليكم|هلا|hi|hello|صباح الخير|مساء الخير)( .*)?$/.test(n))return {h:'<p>أهلًا بك 👋 أنا المساعد العلمي في مختبر الأستاذ يوسف القاق. اسألني عن أي مفهوم أو قانون أو تجربة، مثل: «ما تأثير تندال؟»، «قانون أوم»، «الفرق بين الانشطار والاندماج».</p>',x:'أهلًا بك'};
+ if(/^(مرحبا|اهلا|السلام عليكم|هلا|hi|hello|صباح الخير|مساء الخير)( .*)?$/.test(n))return {greet:1,h:'<p>أهلًا بك 👋 أنا المساعد العلمي في مختبر الأستاذ يوسف القاق. اسألني عن أي مفهوم أو قانون أو تجربة، مثل: «ما تأثير تندال؟»، «قانون أوم»، «الفرق بين الانشطار والاندماج».</p>',x:'أهلًا بك'};
  var cr=curRow();
  if(cr>=0&&/(هذه|هذي|هاي|الحاليه) ?التجربه|^(اشرح|فسر|لخص|ماذا يحدث|ما النتيجه|ليش|لماذا)( لي)?( التجربه| النتيجه| هذا| ذلك)?$/.test(n)){var e0=explainRow(cr);return e0}
  var fa=faq(raw);if(fa&&fa.s>=.8)return faqAns(fa.i);var el=elem(raw,n);if(el)return el;
@@ -2617,15 +2617,56 @@ function brain(q){load();var raw=String(q||'').trim(),n=nz(raw);if(!raw)return {
  var pa2=priorAns(raw);
  if(strong&&(!pa2||top.c>=.99))return one(raw,res);
  if(fa&&fa.s>=.55&&!(strong&&top.c>=.99))return faqAns(fa.i);
- if(pa2)return {h:'<p>'+esc(pa2).replace(/\n/g,'<br>')+'</p>'+expBtns(relExp(res,3,-1)),x:pa2};
+ if(pa2)return {partial:!(top&&top.c>=.6),top:top?topLabel(top):'',h:'<p>'+esc(pa2).replace(/\n/g,'<br>')+'</p>'+expBtns(relExp(res,3,-1)),x:pa2};
  if(top&&top.c>=.45&&top.s>=5)return one(raw,res);
+ if(top&&top.c>=.3&&top.s>=3.2){var pr=one(raw,res);pr.partial=1;pr.top=topLabel(top);return pr}
  // لا يوجد تطابق كافٍ: اقتراحات صادقة بدل إجابة عامة
  var h='<p>لم أجد في قاعدة معرفتي إجابة موثوقة عن «'+esc(raw)+'»، ولن أخمّن إجابة قد تكون خطأ.</p>',sug=[];
  for(var i=0;i<res.length&&sug.length<5;i++){var D=res[i].d,lab=D.y==='g'?KB.g[D.i][0]:D.y==='e'?KB.r[D.i][0]:KB.q[D.i][0];if(sug.indexOf(lab)<0)sug.push(lab)}
  if(sug.length){h+='<span class="yb-s">هل تقصد أحد هذه المواضيع؟</span><span class="yb-b">';sug.forEach(function(s){h+='<button type="button" data-yb-ask="'+esc(s).replace(/"/g,'&quot;')+'">'+esc(s)+'</button>'});h+='</span>'}
  else h+='<p>جرّب كتابة اسم المفهوم أو القانون أو التجربة بكلمة أو كلمتين، مثل: «الكثافة»، «قانون أوم»، «البناء الضوئي».</p>';
  if(cr>=0)h+=expBtns([cr]);
- return {h:h,x:'لم أجد إجابة موثوقة عن هذا السؤال في قاعدة المعرفة. جرّب اسم المفهوم أو القانون مباشرة.'}}
+ return {h:h,x:'لم أجد إجابة موثوقة عن هذا السؤال في قاعدة المعرفة. جرّب اسم المفهوم أو القانون مباشرة.',miss:1,sug:sug}}
+/* ===== طبقة المساعد البشرية: تصحيح الأخطاء، العامية، هوية السائل، الأسئلة التوضيحية، الإجابة الجزئية، تسجيل الثغرات ===== */
+function topLabel(t){var D=t.d;return D.y==='g'?KB.g[D.i][0]:D.y==='e'?KB.r[D.i][0]:KB.q[D.i][0]}
+var COL={'ماي':'ماء','مي':'ماء','ميه':'ماء','مويه':'ماء','مايه':'ماء','كهربا':'كهرباء','الكهربا':'الكهرباء','سما':'سماء','السما':'السماء','شتا':'شتاء','الشتا':'الشتاء','هوا':'هواء','الهوا':'الهواء','صدي':'صدا','صدى':'صدا','بيصدي':'صدا','بيصدى':'صدا','اوكسجين':'اكسجين','الاوكسجين':'الاكسجين','اليكترون':'الكترون','اليكترونات':'الكترونات','مغنطيس':'مغناطيس','كيميا':'كيمياء','فيزيا':'فيزياء','احيا':'احياء','عضويه':'العضويه','بطاريه':'البطاريه','فلزات':'الفلزات','سخونه':'حراره','سخن':'حراره','بيسخن':'حراره','بيبرد':'تبريد','دم':'الدم','بنعطس':'العطس','بنتاوب':'التثاؤب','بنتثاوب':'التثاؤب','حازوقه':'الحازوقه','فواق':'الحازوقه','زغطه':'الحازوقه','بالون':'البالون','طياره':'الطائره','الطياره':'الطائره','سياره':'السياره','موبايل':'الهاتف','جوال':'الهاتف','تلفون':'الهاتف','مكيف':'التكييف','براد':'الثلاجه','تلاجه':'الثلاجه','ميكروويف':'الميكروويف','مايكرويف':'الميكروويف','بسكليت':'الدراجه','بيسكليت':'الدراجه','غيم':'الغيوم','الغيم':'الغيوم','شتي':'المطر','قزح':'قوس','زلزال':'الزلازل','بركان':'البراكين','ديناصور':'الديناصورات','دينوصورات':'الديناصورات','مطعوم':'اللقاح','تطعيم':'اللقاح','فيروس':'الفيروس','جراثيم':'البكتيريا','ph':'الرقم الهيدروجيني','بي اتش':'الرقم الهيدروجيني'};
+var VOC=null;function vocab(){if(VOC)return VOC;VOC=[];for(var k in DF)if(k.length>=3)VOC.push(k);return VOC}
+function lev(a,b,mx){if(Math.abs(a.length-b.length)>mx)return mx+1;var p=[],c,i,j;for(j=0;j<=b.length;j++)p[j]=j;for(i=1;i<=a.length;i++){c=[i];var mn=i;for(j=1;j<=b.length;j++){c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));if(c[j]<mn)mn=c[j]}if(mn>mx)return mx+1;p=c}return p[b.length]}
+function fixQ(raw){var w=nz(raw).split(' '),out=[],ch=0;for(var i=0;i<w.length;i++){var x=w[i];if(!x)continue;if(COL[x]){out.push(COL[x]);ch=1;continue}
+  var st=stem(x);if(st.length>=4&&!DF[st]&&!STOP[x]){var mx=st.length>=7?2:1,best=null,bd=9,bf=-1;var V=vocab();for(var j=0;j<V.length;j++){var d=lev(st,V[j],mx);if(d<=mx&&(d<bd||(d===bd&&(DF[V[j]]||0)>bf))){bd=d;best=V[j];bf=DF[V[j]]||0}}if(best){out.push(best);ch=1;continue}}
+  out.push(x)}return ch?out.join(' '):raw}
+var META=/(^| )(كيف|شلون)? ?(اشرح|ادرس|اعلم|افهم|اوصل|افهّم)( ها| هاي| هذا| فكره| مفهوم)?( ل| لل)?(طلابي|الطلاب|طلبتي|الطلبه|ولادي|ابني|بنتي)?( |$)|(^| )(لطلابي|للطلاب|طلابي|طلبتي|بالحصه|الحصه|بالصف|ابني|بنتي|ولدي|ابنتي|طفلي|بيسالني|بتسالني|بيسال|بتسال|سالني|عن|بدي|ممكن|لو سمحت|يا استاذ|استاذ|مستر)( |$)/g;
+function stripMeta(raw){var n=nz(raw),o=n,k=0;while(k++<4){var m=o.replace(META,' ').replace(/\s+/g,' ').trim();if(m===o)break;o=m}return o.length>=3?o:''}
+function unknownWords(q){var w=nz(q).split(' '),o=[];for(var i=0;i<w.length;i++){var x=w[i];if(!x||x.length<4||STOP[x]||COL[x])continue;var st=stem(x);if(DF[st])continue;var hit=0;for(var k in DF){if(k.length>=4&&(k.indexOf(st)===0||st.indexOf(k)===0)&&Math.abs(k.length-st.length)<=2){hit=1;break}}if(!hit&&fixQ(x)===x)o.push(x)}return o}
+function roleOf(raw){var n=nz(raw);if(/(^| )(ابني|بنتي|ولدي|اولادي|ابنتي|طفلي|ابنائي|ابني|بنتي)( |$)/.test(n))return 'parent';if(/طلابي|طلبتي|الحصه|كيف اشرح|اشرحها للطلاب|للطلاب|لطلابي|صفي|خطه درس|تحضير درس/.test(n))return 'teacher';var r='student';try{r=localStorage.getItem('yq_ai_role')||'student'}catch(e){}return r}
+var PH={student:{o:['سؤال حلو يا صديقي 👌','ممتاز سؤالك يا بطل!','أحسنت إنك سألت 🌟','يا هلا بطالبنا الغالي، خلّيني أوضّحلك:','سؤال ذكي، تعال نفهمها سوا:'],s:['تمام، هاي الخلاصة:','خلّيني أختصرها إلك:','باختصار:'],c:'إذا في نقطة مش واضحة، احكيلي وين بالزبط ووضّحلك أكثر 💪',m:'سامحني يا صديقي، هالسؤال لسّا مش موجود عندي بمعلومة موثوقة، وما بدي أعطيك إشي غلط. سجّلته عشان نضيفه قريباً إن شاء الله 🙏',t:['العفو يا بطل، بالتوفيق دايماً 🌟','ولا يهمك، أنا موجود لأي سؤال ثاني 💪']},
+ teacher:{o:['أهلاً أستاذنا الفاضل،','يعطيك العافية أستاذنا،','معلمنا الغالي، إليك الفكرة باختصار:','سؤال في محلّه أستاذنا،'],s:['إليك الفكرة:','باختصار علمي:'],c:'إذا بتحب، «وكيل المعلم» بجهّزلك خطة حصة علاجية واختباراً قصيراً حسب نتائج صفك.',m:'اعذرني أستاذنا الفاضل، هذا السؤال غير مغطّى في قاعدة المعرفة حالياً بمعلومة موثوقة، وسجّلته ليُضاف ضمن التحديث القادم بإذن الله.',t:['يعطيك العافية أستاذنا، بالتوفيق 🌷','شكراً لك أستاذنا، وبخدمتك دائماً.']},
+ parent:{o:['يعطيك العافية على حرصك ومتابعتك 🌷','أهلاً فيك، واهتمامك بابنك أو بنتك بيفرق كثير.','سؤال مهم، وخلّيني أوضّحلك ببساطة:'],s:['ببساطة:','الفكرة باختصار:'],c:'نصيحة صغيرة: خلّي ابنك يشرحلك الفكرة بكلماته، هاي من أقوى طرق تثبيت الفهم.',m:'سامحني، هالسؤال لسّا مش موجود عندي بمعلومة موثوقة، وما بدي أعطيك إشي غير دقيق. سجّلته عشان يُضاف قريباً إن شاء الله 🌷',t:['العفو، وربنا يوفّق أولادك 🌷','يسعدني إني ساعدتك، وأهلاً فيك بأي وقت.']}};
+function pick(a,key){var i=0;try{i=+(sessionStorage.getItem(key)||0)}catch(e){}try{sessionStorage.setItem(key,String(i+1))}catch(e){}return a[i%a.length]}
+function turn(){var n=0;try{n=+(sessionStorage.getItem('yb_turn')||0)+1;sessionStorage.setItem('yb_turn',String(n))}catch(e){}return n}
+var LOGGED={};function logGap(q,kind,role,matched){try{var C=window.YQ_CLOUD;if(!C||!C.url||!C.key)return;var k=kind+'|'+q;if(LOGGED[k])return;LOGGED[k]=1;
+ fetch(C.url.replace(/\/$/,'')+'/rest/v1/kb_gaps',{method:'POST',headers:{apikey:C.key,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({q:String(q).slice(0,300),kind:kind,role:role,matched:matched?String(matched).slice(0,200):null,page:(location.pathname||'/').slice(0,120)})}).catch(function(){})}catch(e){}}
+var LASTQ={};
+function fb(q,title){var id='yb'+Math.random().toString(36).slice(2,8);LASTQ[id]={q:q,t:title||''};return '<span class="yb-b yb-fb" id="'+id+'"><button type="button" data-yb-fb="good" data-id="'+id+'">👍 أفادتني</button><button type="button" data-yb-fb="bad" data-id="'+id+'">👎 ما أفادتني</button></span>'}
+function brain(q){var raw=String(q||'').trim(),n=nz(raw),role=roleOf(raw),P=PH[role]||PH.student;load();
+ if(/^(شكرا|شكرا لك|شكرا كتير|يسلمو|يسلموا|مشكور|يعطيك العافيه|الله يعطيك العافيه|thanks|thank you|جزاك الله خير)( .*)?$/.test(n))return {h:'<p>'+pick(P.t,'yb_t_'+role)+'</p>',x:P.t[0]};
+ if(!document.getElementById('lab')||getComputedStyle(document.getElementById('lab')).display==='none'){if(/^(ما فهمت|مش فاهم|مو فاهم|مش فاهمه|اشرح|اشرحلي|اشرح لي|فسر|ساعدني|سؤال|عندي سؤال|بدي اسال|ممكن سؤال|حل|حللي|قانون|تجربه|درس|مساله|ممكن تساعدني)$/.test(n)){
+  var ex=role==='teacher'?['أخطاء شائعة في الاتزان الكيميائي','كيف استخدم المختبر الافتراضي بالحصة','قانون أوم']:role==='parent'?['كيف اساعد ابني بالعلوم','بكرة امتحان علوم شو ادرس','ليش لازم ندرس علوم']:['شو يعني مول','ليش السما زرقا','كيف بحل المسائل الحسابية بالعلوم'];
+  return {h:'<p>أكيد، من عيوني 😊 بس احكيلي عن شو بالزبط؟ اكتب اسم الدرس أو المفهوم أو التجربة، أو اختار واحد من هدول:</p><span class="yb-b">'+ex.map(function(e){return '<button type="button" data-yb-ask="'+esc(e)+'">'+esc(e)+'</button>'}).join('')+'</span>',x:'وضّح سؤالك أكثر.'}}}
+ var r=core(raw),fixed=null,q0=stripMeta(raw);
+ if(q0&&q0!==n){var r0=core(q0);if(!r0.miss&&!r0.partial&&!r0.greet)r=r0}
+ var unk=unknownWords(q0||raw);if(unk.length&&!r.miss&&!r.greet&&!r.partial){r.partial=1;r.unk=unk}
+ if(r.miss||r.partial){var q2=fixQ(raw);if(q2&&q2!==raw&&nz(q2)!==n){var r2=core(q2);if(!r2.miss&&(!r2.partial||r.miss)){r=r2;fixed=q2}}}
+ if(r.greet){var g={student:'أهلاً وسهلاً يا صديقي 👋',teacher:'أهلاً وسهلاً أستاذنا الفاضل 🌷',parent:'أهلاً وسهلاً فيك، ونوّرت 🌷'}[role];return {h:'<p>'+g+'</p>'+r.h,x:r.x}}
+ if(r.miss){logGap(raw,'miss',role,null);var h='<p>'+P.m+'</p>';if(r.sug&&r.sug.length){h+='<span class="yb-s">يمكن قصدك واحد من هدول؟</span><span class="yb-b">';r.sug.forEach(function(s){h+='<button type="button" data-yb-ask="'+esc(s).replace(/"/g,'&quot;')+'">'+esc(s)+'</button>'});h+='</span>'}else h+='<p>جرّب تكتب اسم المفهوم أو القانون بكلمة أو كلمتين، مثل: «الكثافة»، «قانون أوم»، «البناء الضوئي».</p>';return {h:h,x:r.x,miss:1}}
+ var t=turn(),open=(t===1||t%3===0)?pick(P.o,'yb_o_'+role):pick(P.s,'yb_s_'+role),pre='<p class="yb-hi">'+open+'</p>';
+ var title0=(r.h.match(/class="yb-t">(?:\S+\s)?([^<]{2,80})<\/span>/)||[])[1]||'';if(fixed&&title0)pre+='<p class="yb-note">✍️ صحّحت الكتابة تلقائياً، وفهمت إنك بتسأل عن: «'+esc(title0)+'»</p>';
+ if(r.partial){logGap(raw,'partial',role,r.top||title0);pre+=r.unk?'<p class="yb-note">🔎 ما لقيت معلومة موثوقة عن «'+esc(r.unk.join('، '))+'» بالتحديد، وهاد أقرب إشي عندي مرتبط بسؤالك. سجّلت سؤالك عشان نضيفه قريباً 🙏</p>':'<p class="yb-note">🔎 هاد أقرب إشي لقيته لسؤالك، وممكن يغطي جزء منه بس. إذا قصدك إشي ثاني وضّحلي أكثر 🙏</p>'}
+ var title=(r.h.match(/class="yb-t">[^<]*?([^<]{2,80})<\/span>/)||[])[1]||'';
+ return {h:pre+r.h+'<p class="yb-end">'+P.c+'</p>'+(role==='teacher'?'<span class="yb-b"><button type="button" data-yb-go="ag">🤖 افتح وكيل المعلم</button></span>':'')+fb(raw,title),x:r.x,partial:r.partial}}
+document.addEventListener('click',function(ev){var b=ev.target&&ev.target.closest?ev.target.closest('[data-yb-fb]'):null;if(!b)return;var id=b.getAttribute('data-id'),o=LASTQ[id];if(!o)return;logGap(o.q,b.getAttribute('data-yb-fb'),roleOf(o.q),o.t);var s=document.getElementById(id);if(s)s.innerHTML='<span class="yb-note">شكراً لتقييمك 🌷 '+(b.getAttribute('data-yb-fb')==='bad'?'رح نحسّن هالإجابة قريباً.':'')+'</span>'},true);
+(function(){var st=document.createElement('style');st.textContent='.yb-hi{font-weight:800;margin:0 0 4px}.yb-note{font-size:.9em;opacity:.85;margin:2px 0 6px}.yb-end{font-size:.92em;opacity:.9;margin-top:8px}.yb-fb button{font-size:12px!important;padding:3px 9px!important}';document.head.appendChild(st)})();
+
 window.yqBrain=brain;
 window.yqAskScience=function(q){return brain(q).x};
 function add(cls,html,txt){var m=document.getElementById('msgs');if(!m)return null;var d=document.createElement('div');d.className='m '+cls;if(html!=null)d.innerHTML=html;else d.textContent=txt;m.appendChild(d);m.scrollTop=m.scrollHeight;return d}
