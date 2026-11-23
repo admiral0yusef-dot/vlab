@@ -1,0 +1,7 @@
+# VLab — www.vlabjo.com
+# للإبلاغ عن ثغرة أمنية بشكل خاص (لا تنشرها علناً):
+Contact: https://github.com/admiral0yusef-dot/vlab/security/advisories/new
+Expires: 2027-11-23T00:00:00.000Z
+Preferred-Languages: ar, en
+Canonical: https://www.vlabjo.com/.well-known/security.txt
+Policy: https://github.com/admiral0yusef-dot/vlab/blob/main/SECURITY.md
