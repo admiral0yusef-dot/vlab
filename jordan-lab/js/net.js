@@ -76,7 +76,7 @@
 
   /* ---------- الغرفة ---------- */
   NET.create = function (mode, rounds) {
-    NET.leave(true); NET.room = rid(6); NET.host = true; NET.hostId = NET.me.id; NET.mode = mode || 'ally'; NET.rounds = rounds || 8; NET.phase = 'lobby'; NET.board = {}; NET.round = 0;
+    NET.leave(true); NET.room = rid(6); NET.host = true; NET.hostId = NET.me.id; NET.mode = mode || 'ally'; NET.rounds = rounds || 5; NET.phase = 'lobby'; NET.board = {}; NET.round = 0;
     NET.me.team = NET.mode === 'teams' ? 'r' : 'a';
     NET.link = new Link(NET.room, onMsg, onStatus); ensureBoard(NET.me.id, { name: NET.me.name, team: NET.me.team });
     startBeat(); setTimeout(hello, 300);
@@ -129,9 +129,9 @@
     var q = pickQ(); if (!q) return; NET.round++;
     NET.q = { rid: NET.room + NET.round, got: {}, first: null }; var msg = { rid: NET.q.rid, n: NET.round, of: NET.rounds, q: q.q, o: q.o, a: q.a, src: q.src, sec: 20 };
     NET.send('q', msg); showQ(msg); pushBoard();
-    clearTimeout(NET.q.tm); NET.q.tm = setTimeout(nextRound, 26000);
+    clearTimeout(NET.q.tm); NET.q.tm = setTimeout(nextRound, 45000);
   }
-  function hostLoop() { clearTimeout(NET._first); NET._first = setTimeout(nextRound, 12000); }
+  function hostLoop() { clearTimeout(NET._first); NET._first = setTimeout(nextRound, 20000); }
   NET.start = function () {
     if (!NET.host) return; NET.phase = 'play'; NET.round = 0; NET._used = [];
     Object.keys(NET.board).forEach(function (id) { var b = NET.board[id]; b.pts = b.ok = b.n = b.kills = b.arena = 0; });
@@ -206,12 +206,14 @@
       if (!p.pl) { p.pl = new JG.Player(R); p.phase = 0; }
       p.x += (p.tx - p.x) * .25; p.z += (p.tz - p.z) * .25; p.y += ((p.ty || 0) - p.y) * .3; var dh = ((p.th - p.h + Math.PI * 3) % (Math.PI * 2)) - Math.PI; p.h += dh * .3;
       var pl = p.pl; pl.pos = [p.x, p.y, p.z]; pl.h = p.h; pl.speed = p.sp || 0; pl.phase = (pl.phase || 0) + (p.sp || 0) * .016 * 2.2; pl.ground = p.y < .05; pl.hurtT = 0; pl.inv = 0; pl.carry = null; pl.emote = null;
-      pl.mode = p.team === 'b' ? 'base' : 'acid';
+      pl.mode = p.team === 'b' ? 'base' : 'acid'; pl.remote = true;
+      pl.coatC = p.team === 'r' ? [1, .3, .35] : p.team === 'b' ? [.3, .6, 1] : [.75, .4, 1];   // اللاعبون الآخرون: بنفسجي (أو لون الفريق)
       try { pl.draw(R, t, false); } catch (e) {}
       var lab = (p.name || 'لاعب') + (p.team === 'r' ? ' 🔴' : p.team === 'b' ? ' 🔵' : '');
       if (p._lab !== lab) { p._lab = lab; p._tex = R.texture(JG.labelCanvas(lab, { fs: 34, bg: 'rgba(8,12,28,.82)', col: '#fff', bd: TEAMC[p.team] || '#a855f7' }), p._tex); }
       R.sprite(p._tex, p.x, p.y + 2.45, p.z, 1.9, .42);
     });
+    var me = G.player; if (me) { if (!NET._meTex) NET._meTex = R.texture(JG.labelCanvas('▼ أنت', { fs: 34, bg: 'rgba(8,12,28,.82)', col: '#fde047', bd: '#fde047' })); R.sprite(NET._meTex, me.pos[0], me.pos[1] + 2.45, me.pos[2], 1.3, .42); }
   };
   /* الأعداء المهزومون تُحتسب في الغرفة */
   var origHit = G.hitFoe;
@@ -230,7 +232,7 @@
       return '<h2>👥 اللعب الجماعي</h2><p class="mpP">العبوا معاً في الوقت نفسه من أجهزة مختلفة: أنشئ غرفة وأرسل رمزها لأصدقائك، أو ادخل برمز وصلك.</p>' +
         '<div class="frm"><label>اسمك<input id="mpName" maxlength="24" value="' + esc(NET.me.name) + '" placeholder="اكتب اسمك"></label></div>' +
         '<div class="mpBox"><b>إنشاء غرفة جديدة</b><div class="seg" id="mpMode">' + Object.keys(MODES).map(function (k) { return '<button type="button" data-m="' + k + '" class="' + (NET.mode === k ? 'on' : '') + '">' + MODES[k] + '</button>'; }).join('') + '</div>' +
-        '<div class="seg" id="mpRounds">' + [5, 8, 12].map(function (n) { return '<button type="button" data-r="' + n + '" class="' + (NET.rounds === n ? 'on' : '') + '">' + n + ' جولات</button>'; }).join('') + '</div>' +
+        '<div class="seg" id="mpRounds">' + [3, 5, 8].map(function (n) { return '<button type="button" data-r="' + n + '" class="' + (NET.rounds === n ? 'on' : '') + '">' + n + ' جولات</button>'; }).join('') + '</div>' +
         '<small>الأسئلة من صف المضيف: ' + esc(JG.GRADE && JG.GRADE.g ? JG.GRADE.label() : 'اختر صفك في الشاشة الرئيسية أولاً') + '</small><button class="sbtn big" data-a="mpCreate">➕ إنشاء غرفة</button></div>' +
         '<div class="mpBox"><b>الدخول إلى غرفة</b><input id="mpCode" maxlength="6" dir="ltr" placeholder="رمز من 6 خانات" value="' + esc(invite) + '" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:800"><button class="sbtn" data-a="mpJoin">🚪 دخول</button></div>' +
         '<div class="btns">' + back + '</div>';

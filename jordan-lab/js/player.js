@@ -33,7 +33,8 @@
       leg: mk(function (g) { g.box(0, -.26, 0, .2, .52, .21, '#1e3a8a'); g.box(0, -.56, .05, .22, .1, .32, '#111827'); }),
       barrel: mk(function (g) { g.cyl(0, 0, 0, .24, .55, '#ffffff', 12); g.ring(0, .1, 0, .245, .025, '#334155', 12); g.ring(0, .45, 0, .245, .025, '#334155', 12); }),
       bottle: mk(function (g) { g.cyl(0, 0, 0, .1, .22, '#ffffff', 10); g.cyl(0, .22, 0, .04, .12, '#e2e8f0', 8); }),
-      atom: mk(function (g) { g.sphere(0, 0, 0, .14, '#ffffff', 10); })
+      atom: mk(function (g) { g.sphere(0, 0, 0, .14, '#ffffff', 10); }),
+      halo: mk(function (g) { g.cyl(0, 0, 0, .62, .02, '#ffffff', 28); })   // حلقة مضيئة تحت اللاعب بلون الوضع
     };
     this.pos = [0, 0, 0]; this.vel = [0, 0, 0]; this.h = 0; this.th = 0; this.phase = 0; this.ground = true; this.coyote = 0; this.jb = 0;
     this.r = .38; this.energy = 100; this.maxE = 100; this.inv = 0; this.hurtT = 0; this.emote = null; this.emoteT = 0; this.carry = null;
@@ -78,10 +79,13 @@
     var y0 = reflect ? -p[1] : p[1], sy = reflect ? -1 : 1;
     var tint = this.hurtT > 0 && Math.floor(t * 20) % 2 ? [1.6, .5, .5] : (this.inv > 0 && Math.floor(t * 16) % 2 ? [1.25, 1.25, 1.25] : null);
     var o = { tint: tint, spec: .25 };
+    var modeC = this.coatC || (this.mode === 'acid' ? [1, .3, .35] : [.3, .6, 1]);
+    // المعطف يتلوّن بلون الوضع (حمض أحمر / قاعدة أزرق) ليظهر التبديل على الشخصية نفسها
+    var coat = tint ? o : { tint: [.3 + modeC[0] * .8, .3 + modeC[1] * .8, .3 + modeC[2] * .8], spec: .25 };
+    if (!reflect) R.draw(this.m.halo, M4.trs(p[0], p[1] + .03, p[2], 0, 0, 0), { tint: modeC, em: 1, emc: [modeC[0] * .6, modeC[1] * .6, modeC[2] * .6], a: this.remote ? .28 : .5 + Math.sin(t * 4) * .12 });
     var root = M4.trs(p[0], y0 + (.92 + bob) * sy, p[2], 0, this.h, 0, 1, sy, 1);
     var lean = air ? -.15 : Math.min(.18, s * .025);
-    var torso = M4.mul(root, M4.trs(0, 0, 0, lean, 0, 0)); R.draw(this.m.torso, torso, o);
-    var modeC = this.mode === 'acid' ? [1, .3, .35] : [.3, .6, 1];
+    var torso = M4.mul(root, M4.trs(0, 0, 0, lean, 0, 0)); R.draw(this.m.torso, torso, coat);
     R.draw(this.m.tank, M4.mul(torso, M4.trs(0, .14, -.29, 0, 0, 0, 1, 1, 1)), { tint: modeC, em: .7, emc: [modeC[0] * .3, modeC[1] * .3, modeC[2] * .3] });
     var hy = .8 + .27; var look = this.emote === 'win' ? -.3 : 0;
     R.draw(this.m.head, M4.mul(torso, M4.trs(0, hy, 0, look + Math.sin(t * 1.3) * .03, Math.sin(t * .7) * .08, 0)), o);
@@ -91,8 +95,8 @@
     if (this.emote === 'hurt') { la = -.9; ra = -.9; lz = .8; rz = -.8; }
     if (this.emote === 'shoot') { ra = -1.45; }
     if (this.carry) { la = -1.1; ra = -1.1; lz = .1; rz = -.1; }
-    R.draw(this.m.arm, M4.mul(torso, M4.trs(-.41, .72, 0, la, 0, lz)), o);
-    R.draw(this.m.arm, M4.mul(torso, M4.trs(.41, .72, 0, ra, 0, rz)), o);
+    R.draw(this.m.arm, M4.mul(torso, M4.trs(-.41, .72, 0, la, 0, lz)), coat);
+    R.draw(this.m.arm, M4.mul(torso, M4.trs(.41, .72, 0, ra, 0, rz)), coat);
     var ll = air ? -.9 : sw, rl = air ? .2 : -sw;
     R.draw(this.m.leg, M4.mul(root, M4.trs(-.16, -.02, 0, -ll, 0, 0)), o);
     R.draw(this.m.leg, M4.mul(root, M4.trs(.16, -.02, 0, -rl, 0, 0)), o);

@@ -58,16 +58,16 @@
 
   /* ألغاز الكيمياء التخصصية تصبح بوابات أسئلة من بنك الصف */
   GR.gate = function (Gm, n, title, icon, cb) {
-    var i = 0, next = function () { if (i >= n) { cb(true); return; } i++; Z.mcq(Gm, { title: title + ' (' + i + '/' + n + ')', icon: icon, okText: i < n ? 'السؤال التالي ←' : 'افتح البوابة ←' }, function () { next(); }); };
+    var i = 0, next = function () { if (i >= n) { cb(true); return; } i++; Z.mcq(Gm, { retry: false, title: title + (n > 1 ? ' (' + i + '/' + n + ')' : ''), icon: icon, okText: i < n ? 'السؤال التالي ←' : 'افتح البوابة ←' }, function () { next(); }); };
     next();
   };
-  var PZ = { indicatorDoor: ['بوابة الكاشف', '🚪', 2], saltSort: ['خزانة الأسئلة', '🧂', 2], energyGraph: ['شاشة الطاقة', '📈', 2], leChatelier: ['مفاعل الاتزان', '⚖️', 2],
-    kcCalc: ['حاسوب المختبر', '🧮', 2], moleculeMachine: ['آلة الجزيئات', '🧬', 2], galvanic: ['محطة الكهرباء', '🔋', 2], molten: ['فرن المصاهير', '🔥', 2] };
+  var PZ = { indicatorDoor: ['بوابة الكاشف', '🚪', 1], saltSort: ['خزانة الأسئلة', '🧂', 1], energyGraph: ['شاشة الطاقة', '📈', 1], leChatelier: ['مفاعل الاتزان', '⚖️', 1],
+    kcCalc: ['حاسوب المختبر', '🧮', 1], moleculeMachine: ['آلة الجزيئات', '🧬', 1], galvanic: ['محطة الكهرباء', '🔋', 1], molten: ['فرن المصاهير', '🔥', 1] };
   Object.keys(PZ).forEach(function (k) {
     var orig = Z[k]; if (!orig) return;
     Z[k] = function () {
       if (!GR.active) return orig.apply(Z, arguments);
-      var a = arguments, cb = a[a.length - 1], p = PZ[k], extra = (JG.ARENA && JG.ARENA.tier) ? JG.ARENA.tier() : 0;
+      var a = arguments, cb = a[a.length - 1], p = PZ[k], extra = (JG.ARENA && JG.ARENA.tier && JG.ARENA.tier() >= 2) ? 1 : 0;
       GR.gate(a[0], p[2] + extra, p[0], p[1], function () { if (typeof cb === 'function') cb(true); });
     };
   });
