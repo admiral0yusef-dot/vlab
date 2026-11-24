@@ -58,7 +58,7 @@
 
   /* ألغاز الكيمياء التخصصية تصبح بوابات أسئلة من بنك الصف */
   GR.gate = function (Gm, n, title, icon, cb) {
-    var i = 0, next = function () { if (i >= n) { cb(true); return; } i++; Z.mcq(Gm, { retry: false, title: title + (n > 1 ? ' (' + i + '/' + n + ')' : ''), icon: icon, okText: i < n ? 'السؤال التالي ←' : 'افتح البوابة ←' }, function () { next(); }); };
+    var i = 0, rep = function (o) { if (JG.NET && JG.NET.room) JG.NET.report(o); }, next = function () { if (i >= n) { rep({ mission: 1 }); cb(true); return; } i++; Z.mcq(Gm, { retry: false, title: title + (n > 1 ? ' (' + i + '/' + n + ')' : ''), icon: icon, okText: i < n ? 'السؤال التالي ←' : 'افتح البوابة ←' }, function () { next(); }); };
     next();
   };
   var PZ = { indicatorDoor: ['بوابة الكاشف', '🚪', 1], saltSort: ['خزانة الأسئلة', '🧂', 1], energyGraph: ['شاشة الطاقة', '📈', 1], leChatelier: ['مفاعل الاتزان', '⚖️', 1],

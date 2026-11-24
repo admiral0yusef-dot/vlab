@@ -56,12 +56,12 @@
     var ask = function () {
       if (i >= n) { AR.gate = false; var bonus = okAll ? 100 * AR.stage : 0; AR.score += 150 * AR.stage + bonus; G.addScore(150 * AR.stage + bonus, 20 + AR.stage * 4);
         if (AR.stage > AR.best) { AR.best = AR.stage; ls('jg_arena_best', AR.best); }
-        if (JG.NET && JG.NET.room) JG.NET.report({ arena: AR.stage });
+        if (JG.NET && JG.NET.room) JG.NET.report({ arena: AR.stage, mission: 1 });
         U.toast(okAll ? '🌟 مرحلة مثالية! مكافأة +' + bonus : 'عبرت المرحلة ' + AR.stage); G.player.energy = Math.min(G.player.maxE, G.player.energy + 25);
         AR.stage++; setTimeout(function () { if (AR.on) AR.wave(); }, 1400); return; }
       i++; AR.asked++;
       Z.mcq(G, { title: 'بوابة المرحلة ' + AR.stage + ' — سؤال ' + i + ' من ' + n, icon: '🏟️', retry: false, okText: i < n ? 'السؤال التالي ←' : 'المرحلة التالية ←', stakes: 'المرحلة ' + AR.stage },
-        function (ok) { if (ok) { AR.ok++; if (JG.NET && JG.NET.room) JG.NET.report({ correct: 1 }); } else okAll = false; ask(); });
+        function (ok) { if (ok) AR.ok++; else okAll = false; ask(); });
     };
     U.banner('اكتملت الموجة!', 'أجب لتفتح المرحلة ' + (AR.stage + 1), '#38bdf8'); setTimeout(ask, 900);
   };

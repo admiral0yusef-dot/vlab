@@ -2,7 +2,7 @@
    JG Net — اللعب الجماعي برمز غرفة (مجاني عبر Supabase Realtime Broadcast)
    الأنماط: 🤝 تحالف (الجميع فريق واحد نحو هدف مشترك) · ⚔️ منافسة فردية · 🔴🔵 فريقان
    - يرى كل لاعب الآخرين داخل المختبر بأسمائهم وألوان فرقهم
-   - المضيف يطلق جولات أسئلة متزامنة من بنك صفّه، والنقاط للأصح والأسرع
+   - لا أسئلة دورية: الأسئلة فقط عند فتح البوابات وعبور المراحل وإنجاز المهام، وكل مهمة تُحسب للفريق
    - تُحتسب أيضاً: الأعداء المهزومون، أسئلة المحطات، ومراحل «تحدي المراحل»
    - احتياط: BroadcastChannel للعب بين نوافذ الجهاز نفسه (وللاختبار)
    ============================================================ */
@@ -103,10 +103,10 @@
   }
 
   /* ---------- المضيف: النقاط والجولات ---------- */
-  function ensureBoard(id, p) { var b = NET.board[id] || (NET.board[id] = { name: p.name || 'لاعب', team: p.team || 'a', pts: 0, ok: 0, n: 0, kills: 0, arena: 0 }); b.name = p.name || b.name; b.team = p.team || b.team; return b; }
+  function ensureBoard(id, p) { var b = NET.board[id] || (NET.board[id] = { name: p.name || 'لاعب', team: p.team || 'a', pts: 0, ok: 0, n: 0, kills: 0, arena: 0, ms: 0 }); b.name = p.name || b.name; b.team = p.team || b.team; return b; }
   function teamTotals() { var t = { r: 0, b: 0, a: 0 }; Object.keys(NET.board).forEach(function (id) { var b = NET.board[id]; t[b.team] = (t[b.team] || 0) + b.pts; }); return t; }
   function pushBoard() {
-    if (!NET.host) return; var n = Object.keys(NET.board).length; NET.ally.goal = Math.max(800, n * 120 * NET.rounds * .6 | 0); NET.ally.pts = teamTotals().a + teamTotals().r + teamTotals().b;
+    if (!NET.host) return; var n = Math.max(1, Object.keys(NET.board).length); NET.ally.goal = n * NET.rounds; NET.ally.pts = Object.keys(NET.board).reduce(function (s, id) { return s + (NET.board[id].ms || 0); }, 0);
     NET.teamPts = teamTotals(); NET.send('board', { board: NET.board, ally: NET.ally, round: NET.round, teams: NET.teamPts }); hud();
   }
   function add(id, pts, f) { var p = id === NET.me.id ? { name: NET.me.name, team: NET.me.team } : (NET.peers[id] || {}); var b = ensureBoard(id, p); b.pts += pts; if (f) f(b); }
@@ -116,7 +116,18 @@
     pushBoard();
     if (Object.keys(Q.got).length >= Object.keys(NET.board).length) { clearTimeout(Q.tm); Q.tm = setTimeout(nextRound, 2500); }
   }
-  function hostReport(id, m) { var pts = (m.kill ? 10 * m.kill : 0) + (m.correct ? 20 * m.correct : 0) + (m.arena ? 50 : 0); add(id, pts, function (b) { if (m.kill) b.kills += m.kill; if (m.arena) b.arena = Math.max(b.arena, m.arena); }); pushBoard(); }
+  function hostReport(id, m) { var pts = (m.kill ? 10 * m.kill : 0) + (m.correct ? 100 * m.correct : 0) + (m.mission ? 50 * m.mission : 0); add(id, pts, function (b) { if (m.kill) b.kills += m.kill; if (m.ans) b.n += m.ans; if (m.correct) b.ok += m.correct; if (m.mission) b.ms = (b.ms || 0) + m.mission; if (m.arena) b.arena = Math.max(b.arena, m.arena); }); pushBoard(); checkEnd(); }
+  /* نهاية اللعبة بالمهام لا بالوقت: تحالف = مجموع المهام، فردي = أول لاعب، فرق = أول فريق */
+  function checkEnd() {
+    if (!NET.host || NET.phase !== 'play') return; var B = NET.board, ids = Object.keys(B), T = NET.rounds, done = false;
+    if (NET.mode === 'ally') done = NET.ally.pts >= NET.ally.goal;
+    else if (NET.mode === 'solo') done = ids.some(function (id) { return (B[id].ms || 0) >= T; });
+    else { var tm = { r: [0, 0], b: [0, 0] }; ids.forEach(function (id) { var t = tm[B[id].team]; if (t) { t[0] += B[id].ms || 0; t[1]++; } }); done = ['r', 'b'].some(function (k) { return tm[k][1] && tm[k][0] >= T * tm[k][1]; }); }
+    if (done) { NET.phase = 'done'; NET.send('end', { board: NET.board, ally: NET.ally, teams: teamTotals() }); setTimeout(results, 600); }
+  }
+  /* كل سؤال يُجاب داخل الغرفة يُحسب للاعب، وكل بلورة مهمة منجزة */
+  (function () { var Z = JG.Puz, om = Z.mcq; Z.mcq = function (Gm, o, cb) { if (cb && cb._w) return om.call(Z, Gm, o, cb); var w = function (ok) { if (NET.room && NET.phase === 'play') NET.report({ ans: 1, correct: ok ? 1 : 0 }); cb && cb.apply(this, arguments); }; w._w = 1; return om.call(Z, Gm, o, w); };
+    var ot = G.takeCrystal; if (ot) G.takeCrystal = function (z) { ot.apply(G, arguments); if (NET.room) NET.report({ mission: 1 }); }; })();
   NET.report = function (o) { if (!NET.room || NET.phase !== 'play') return; if (NET.host) hostReport(NET.me.id, o); else NET.send('report', o); };
   function pickQ() {
     var DB = JG.DB, q = DB.pick({ avoid: (NET._used || []) }); if (!q) return null; (NET._used = NET._used || []).push(q.id);
@@ -131,17 +142,17 @@
     NET.send('q', msg); showQ(msg); pushBoard();
     clearTimeout(NET.q.tm); NET.q.tm = setTimeout(nextRound, 45000);
   }
-  function hostLoop() { clearTimeout(NET._first); NET._first = setTimeout(nextRound, 20000); }
+  function hostLoop() { clearTimeout(NET._first); }   // لم تعد هناك أسئلة دورية
   NET.start = function () {
     if (!NET.host) return; NET.phase = 'play'; NET.round = 0; NET._used = [];
-    Object.keys(NET.board).forEach(function (id) { var b = NET.board[id]; b.pts = b.ok = b.n = b.kills = b.arena = 0; });
+    Object.keys(NET.board).forEach(function (id) { var b = NET.board[id]; b.pts = b.ok = b.n = b.kills = b.arena = b.ms = 0; });
     NET.send('start', { mode: NET.mode, rounds: NET.rounds }); startLocal(); hostLoop(); pushBoard();
   };
 
   /* ---------- اللاعب: بدء اللعب وجولات الأسئلة ---------- */
   function startLocal() {
     NET.phase = 'play';
-    var go = function () { if (G.mode !== 'play') { G.save.name = G.save.name || NET.me.name; G.start(!G.hasSave()); } U.screen(null); G.paused = false; U.banner('غرفة ' + NET.room, MODES[NET.mode] + ' · جولات أسئلة كل نصف دقيقة', '#a855f7'); hud(); };
+    var go = function () { if (G.mode !== 'play') { G.save.name = G.save.name || NET.me.name; G.start(!G.hasSave()); } U.screen(null); G.paused = false; U.banner('غرفة ' + NET.room, MODES[NET.mode] + ' · افتحوا البوابات وأنجزوا المهام', '#a855f7'); hud(); };
     if (JG.GRADE && JG.GRADE.g) JG.GRADE.ensure(go); else go();
   }
   function showQ(m) {
@@ -173,7 +184,7 @@
   function ranked() { return Object.keys(NET.board).map(function (id) { var b = NET.board[id]; return Object.assign({ id: id }, b); }).sort(function (a, b) { return b.pts - a.pts; }); }
   function results() {
     clearTimeout(NET._first); var R = ranked(), T = NET.teamPts || teamTotals(), me = R.findIndex(function (r) { return r.id === NET.me.id; });
-    var head = NET.mode === 'ally' ? (NET.ally.pts >= NET.ally.goal ? '🏆 نجح التحالف! جمعتم ' + NET.ally.pts + ' من ' + NET.ally.goal + ' نقطة' : 'جمع التحالف ' + NET.ally.pts + ' من ' + NET.ally.goal + ' نقطة — حاولوا مرة أخرى!')
+    var head = NET.mode === 'ally' ? (NET.ally.pts >= NET.ally.goal ? '🏆 نجح التحالف! أنجزتم ' + NET.ally.pts + ' من ' + NET.ally.goal + ' مهمة' : 'أنجز التحالف ' + NET.ally.pts + ' من ' + NET.ally.goal + ' مهمة — حاولوا مرة أخرى!')
       : NET.mode === 'teams' ? (T.r === T.b ? '🤝 تعادل الفريقان (' + T.r + ')' : (T.r > T.b ? '🔴 فاز الفريق الأحمر ' : '🔵 فاز الفريق الأزرق ') + Math.max(T.r, T.b) + ' مقابل ' + Math.min(T.r, T.b))
       : (R[0] ? '🥇 الفائز: ' + esc(R[0].name) + ' (' + R[0].pts + ' نقطة)' : '');
     U.modal({ title: 'نتائج غرفة ' + NET.room, icon: '🏁', render: function (el, close) {
@@ -232,14 +243,14 @@
       return '<h2>👥 اللعب الجماعي</h2><p class="mpP">العبوا معاً في الوقت نفسه من أجهزة مختلفة: أنشئ غرفة وأرسل رمزها لأصدقائك، أو ادخل برمز وصلك.</p>' +
         '<div class="frm"><label>اسمك<input id="mpName" maxlength="24" value="' + esc(NET.me.name) + '" placeholder="اكتب اسمك"></label></div>' +
         '<div class="mpBox"><b>إنشاء غرفة جديدة</b><div class="seg" id="mpMode">' + Object.keys(MODES).map(function (k) { return '<button type="button" data-m="' + k + '" class="' + (NET.mode === k ? 'on' : '') + '">' + MODES[k] + '</button>'; }).join('') + '</div>' +
-        '<div class="seg" id="mpRounds">' + [3, 5, 8].map(function (n) { return '<button type="button" data-r="' + n + '" class="' + (NET.rounds === n ? 'on' : '') + '">' + n + ' جولات</button>'; }).join('') + '</div>' +
+        '<div class="seg" id="mpRounds">' + [3, 5, 8].map(function (n) { return '<button type="button" data-r="' + n + '" class="' + (NET.rounds === n ? 'on' : '') + '">' + n + ' مهام</button>'; }).join('') + '</div>' +
         '<small>الأسئلة من صف المضيف: ' + esc(JG.GRADE && JG.GRADE.g ? JG.GRADE.label() : 'اختر صفك في الشاشة الرئيسية أولاً') + '</small><button class="sbtn big" data-a="mpCreate">➕ إنشاء غرفة</button></div>' +
         '<div class="mpBox"><b>الدخول إلى غرفة</b><input id="mpCode" maxlength="6" dir="ltr" placeholder="رمز من 6 خانات" value="' + esc(invite) + '" style="text-transform:uppercase;letter-spacing:4px;text-align:center;font-weight:800"><button class="sbtn" data-a="mpJoin">🚪 دخول</button></div>' +
         '<div class="btns">' + back + '</div>';
     }
     NET._shown = NET.mode + NET.rounds + NET.phase + NET.host;
     var link = location.origin + location.pathname + '?room=' + NET.room;
-    return '<h2>👥 غرفة اللعب الجماعي</h2><div class="mpCode" dir="ltr">' + NET.room + '</div><p class="mpP">' + MODES[NET.mode] + ' · ' + NET.rounds + ' جولات · <span id="mpSt">' + (ST[NET.status] || '') + '</span></p>' +
+    return '<h2>👥 غرفة اللعب الجماعي</h2><div class="mpCode" dir="ltr">' + NET.room + '</div><p class="mpP">' + MODES[NET.mode] + ' · ' + NET.rounds + ' مهام لكل لاعب · <span id="mpSt">' + (ST[NET.status] || '') + '</span></p>' +
       '<div class="btns"><button class="sbtn" data-a="mpCopy">📋 نسخ رابط الدعوة</button></div><input id="mpLink" readonly value="' + esc(link) + '" dir="ltr" style="width:100%;font-size:12px;opacity:.8">' +
       (NET.mode === 'teams' ? '<div class="seg" id="mpTeam"><button type="button" data-t="r" class="' + (NET.me.team === 'r' ? 'on' : '') + '">🔴 الفريق الأحمر</button><button type="button" data-t="b" class="' + (NET.me.team === 'b' ? 'on' : '') + '">🔵 الفريق الأزرق</button></div>' : '') +
       '<b>اللاعبون (<span id="mpN">' + (1 + Object.keys(NET.peers).length) + '</span>)</b><div id="mpList">' + playersHTML() + '</div>' +
@@ -277,9 +288,9 @@
   function hud() {
     var on = !!NET.room && NET.phase === 'play' && G.mode === 'play'; bar.hidden = !on; if (!on) return;
     var R = ranked(), me = R.findIndex(function (r) { return r.id === NET.me.id; }), mine = R[me] || { pts: 0 }, T = NET.teamPts || { r: 0, b: 0 };
-    var mid = NET.mode === 'ally' ? '🤝 التحالف <b>' + (NET.ally.pts || 0) + '</b>/' + (NET.ally.goal || 0) + '<span class="pb"><i style="width:' + Math.min(100, (NET.ally.pts || 0) / Math.max(1, NET.ally.goal) * 100) + '%"></i></span>'
+    var mid = NET.mode === 'ally' ? '🤝 مهام التحالف <b>' + (NET.ally.pts || 0) + '</b>/' + (NET.ally.goal || 0) + '<span class="pb"><i style="width:' + Math.min(100, (NET.ally.pts || 0) / Math.max(1, NET.ally.goal) * 100) + '%"></i></span>'
       : NET.mode === 'teams' ? '🔴 <b>' + (T.r || 0) + '</b> · 🔵 <b>' + (T.b || 0) + '</b>' : '⚔️ ترتيبك <b>' + (me + 1) + '</b>/' + R.length;
-    bar.innerHTML = '<span dir="ltr">' + NET.room + '</span> · ' + mid + ' · نقاطك <b>' + mine.pts + '</b> · جولة ' + (NET.round || 0) + '/' + NET.rounds + (NET.status === 'error' ? ' · ⚠️' : '');
+    bar.innerHTML = '<span dir="ltr">' + NET.room + '</span> · ' + mid + ' · نقاطك <b>' + mine.pts + '</b> · مهامك ' + (mine.ms || 0) + '/' + NET.rounds + (NET.status === 'error' ? ' · ⚠️' : '');
   }
   setInterval(hud, 1000);
 

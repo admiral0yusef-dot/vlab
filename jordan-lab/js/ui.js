@@ -63,6 +63,11 @@
     JG.Ent.foes.forEach(function (f) { if (f.dead || f.room !== G.roomId) return; x.fillStyle = '#f87171'; x.beginPath(); x.arc(f.x / 2 * k, oy + f.z / 2 * k, k * .55, 0, 6.3); x.fill(); });
     if (G.boss && G.boss.alive) { x.fillStyle = '#ef4444'; x.beginPath(); x.arc(G.boss.x / 2 * k, oy + G.boss.zz / 2 * k, k * 1.2, 0, 6.3); x.fill(); }
     if (G.target) { var tt = (Date.now() / 300) % 1; x.strokeStyle = '#fde047'; x.lineWidth = 2 * dpr; x.beginPath(); x.arc(G.target[0] / 2 * k, oy + G.target[1] / 2 * k, k * (1 + tt * 1.5), 0, 6.3); x.stroke(); }
+    var N = JG.NET; if (N && N.room && N.peers) { var pt = Date.now() / 400, TC = { r: '#ef4444', b: '#3b82f6', a: '#c084fc' };   // نقاط مضيئة لباقي اللاعبين
+      Object.keys(N.peers).forEach(function (id) { var p = N.peers[id]; if (p.tx === undefined || Date.now() - (p.seen || 0) > 6000) return; var px = (p.x !== undefined ? p.x : p.tx) / 2 * k, py = oy + (p.z !== undefined ? p.z : p.tz) / 2 * k, c = TC[p.team] || TC.a;
+        var gr = x.createRadialGradient(px, py, 0, px, py, k * (3.4 + Math.sin(pt + px) * .6)); gr.addColorStop(0, c + 'ff'); gr.addColorStop(.35, c + '88'); gr.addColorStop(1, c + '00'); x.fillStyle = gr; x.beginPath(); x.arc(px, py, k * 4, 0, 6.3); x.fill();
+        x.fillStyle = '#fff'; x.beginPath(); x.arc(px, py, k * .75, 0, 6.3); x.fill(); x.fillStyle = c; x.beginPath(); x.arc(px, py, k * .5, 0, 6.3); x.fill();
+        if (big) { x.fillStyle = '#fff'; x.font = '800 ' + Math.max(10, k * 1.1) + 'px ' + JG.FONT; x.textAlign = 'center'; x.direction = 'rtl'; x.fillText(p.name || 'لاعب', px, py - k * 1.6); } }); }
     var P = G.player; x.save(); x.translate(P.pos[0] / 2 * k, oy + P.pos[2] / 2 * k); x.rotate(-P.h + Math.PI); x.fillStyle = '#fff'; x.beginPath(); x.moveTo(0, -k * 1.4); x.lineTo(k * .9, k); x.lineTo(-k * .9, k); x.closePath(); x.fill(); x.restore();
     cv.classList.toggle('big', !!big);
   };
@@ -125,7 +130,7 @@
       s.querySelectorAll('#sQ [data-q]').forEach(function (b) { b.onclick = function () { G.settings.quality = b.dataset.q; G.applySettings(); s.querySelectorAll('#sQ button').forEach(function (x) { x.classList.toggle('on', x === b); }); }; });
       $('sSens').oninput = function () { G.settings.sens = +this.value; G.applySettings(); };
     },
-    map: function (s, G) { var bm = $('bigmap'), mini = $('mini'); U.minimap(G, true); bm.width = mini.width; bm.height = mini.height; bm.style.width = mini.style.width; bm.getContext('2d').drawImage(mini, 0, 0); U.minimap(G, false); },
+    map: function (s, G) { var bm = $('bigmap'), mini = $('mini'); var draw = function () { U.minimap(G, true); bm.width = mini.width; bm.height = mini.height; bm.style.width = mini.style.width; bm.getContext('2d').drawImage(mini, 0, 0); U.minimap(G, false); }; draw(); clearInterval(U._mapT); U._mapT = setInterval(function () { if (!document.body.contains(bm)) { clearInterval(U._mapT); return; } draw(); }, 600); },
     admin: function (s, G) { JG.Admin.render($('admin')); }
   };
 })();
