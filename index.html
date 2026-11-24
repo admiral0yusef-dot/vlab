@@ -3048,6 +3048,14 @@ html.yq-embed #tabs,html.yq-embed #yq-promo,html.yq-embed .yq-seo,html.yq-embed 
  html body .wrap>#tabs.chips .chip[data-yqs]::after{font-size:13px!important;font-weight:900!important;line-height:1.6!important;white-space:nowrap!important}
 }
 @media (min-width:1025px){html body .wrap>#tabs.chips{gap:8px!important}html body .wrap>#tabs.chips .chip{font-size:15px!important;padding:10px 16px!important}}
+/* شريط التبويبات ثابت في مكانه أعلى الصفحة (لا يلحق الشاشة عند النزول) + يلتف على الشاشات العريضة */
+html body .wrap>#tabs.chips{position:relative!important;top:auto!important}
+@media (min-width:1025px){
+ html body .wrap>#tabs.chips{-webkit-flex-wrap:wrap!important;flex-wrap:wrap!important;overflow:visible!important;-webkit-justify-content:center!important;justify-content:center!important;row-gap:8px!important}
+ html body .wrap>#tabs.chips .chip{padding:9px 13px!important;font-size:14.5px!important}
+ html body .wrap>#tabs.chips .chip[data-v="ab"]{font-size:12.5px!important;max-width:280px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+}
+@media (max-width:1024px){html body .wrap>#tabs.chips .chip[data-v="ab"][data-yqs]::after{font-size:11.5px!important}}
 html.yq-embed body .wrap>#tabs.chips,html.yq-embed body #tabs{display:none!important}
 @media (max-width:1024px){html.yq-inlab body .wrap>#tabs.chips{display:none!important}}
 /* وضع الأداء للأجهزة البطيئة والشاشات التفاعلية الكبيرة */
