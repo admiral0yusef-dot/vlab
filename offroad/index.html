@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob:; connect-src 'self' data: blob: https://uxjsbkopkizixvlzqmpk.supabase.co wss://uxjsbkopkizixvlzqmpk.supabase.co; frame-src 'self' blob: data: https://phet.colorado.edu https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"><meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0d1b2a">
+<link rel="canonical" href="https://www.vlabjo.com/offroad/"><title>Offroad Legends — أساطير الطرق الوعرة</title>
+<meta name="description" content="لعبة قيادة ومغامرات ثلاثية الأبعاد بفيزياء حقيقية: سبعة عوالم، ست مركبات، مرآب تطوير، تحديات وإنجازات.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff7a1a'/%3E%3Ccircle cx='20' cy='44' r='9' fill='%230d1b2a'/%3E%3Ccircle cx='46' cy='44' r='9' fill='%230d1b2a'/%3E%3Cpath d='M8 36l8-12h22l10 8h8v6H8z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Cairo:wght@600;800;900&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<!-- ================= HUD ================= -->
+<div id="hud" hidden>
+  <div class="hud-tl">
+    <div class="fuel"><svg class="can" viewBox="0 0 32 36"><path d="M6 6h14l6 6v20a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9a3 3 0 0 1 3-3z" fill="#e02424" stroke="#5a0b0b" stroke-width="2"/><path d="M9 14l10 12M19 14L9 26" stroke="#ffd0d0" stroke-width="2.5" stroke-linecap="round"/><rect x="9" y="1" width="8" height="5" rx="1.5" fill="#333"/></svg><div class="bar"><i id="fuelBar"></i></div></div>
+    <div class="cnt"><b class="ic coin"></b><span id="hCoins">0</span></div>
+    <div class="cnt"><b class="ic gem"></b><span id="hDia">0</span></div>
+  </div>
+  <div class="hud-tc"><div id="hDist">0<small>م</small></div><div id="hSub"><span id="hZone"></span> · <span id="hBest"></span></div></div>
+  <button id="bPause" class="round" aria-label="إيقاف مؤقت"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="5" height="16" rx="1.5"/><rect x="14" y="4" width="5" height="16" rx="1.5"/></svg></button>
+  <div id="toasts"></div>
+  <div id="fuelWarn" hidden>⛽ الوقود ينفد!</div>
+  <div class="controls">
+    <button id="pBrake" class="pedal brake" aria-label="BRAKE"><span class="grip"></span><em>BRAKE</em></button>
+    <div class="mid">
+      <button id="bRecover" class="round small" aria-label="إعادة التوازن"><svg viewBox="0 0 24 24"><path d="M12 4a8 8 0 1 1-7.4 5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M3 4v6h6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="gauge"><svg viewBox="0 0 120 80"><path d="M14 70a48 48 0 1 1 92 0" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="9" stroke-linecap="round"/><path d="M88 22a48 48 0 0 1 18 48" fill="none" stroke="#ff3b30" stroke-width="9" stroke-linecap="round"/><g id="nRpm"><path d="M60 62L58 22h4z" fill="#fff"/></g><circle cx="60" cy="62" r="6" fill="#fff"/></svg><b>RPM</b><span id="hSpeed">0 كم/س</span></div>
+      <div class="gauge"><svg viewBox="0 0 120 80"><path d="M14 70a48 48 0 1 1 92 0" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="9" stroke-linecap="round"/><path id="boostArc" d="M14 70a48 48 0 1 1 92 0" fill="none" stroke="#22e3ff" stroke-width="9" stroke-linecap="round" pathLength="100" stroke-dasharray="100 100"/><g id="nBoost"><path d="M60 62L58 22h4z" fill="#fff"/></g><circle cx="60" cy="62" r="6" fill="#fff"/></svg><b>BOOST</b></div>
+      <button id="bBoost" class="round boost" aria-label="BOOST"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="currentColor"/></svg><em>BOOST</em></button>
+    </div>
+    <button id="pGas" class="pedal gas" aria-label="GAS"><span class="grip"></span><em>GAS</em></button>
+  </div>
+  <div id="keysHint">→ / D تسارع · ← / A فرامل · مسافة تعزيز · R توازن · P إيقاف</div>
+</div>
+
+<!-- ================= SCREENS ================= -->
+<section id="sSplash" class="screen show">
+  <div class="logo"><span class="l1">OFFROAD</span><span class="l2">LEGENDS</span><span class="l3">أساطير الطرق الوعرة</span></div>
+  <button id="bStart" class="btn big pulse">اضغط للبدء</button>
+  <p class="foot">7 عوالم · 6 مركبات · فيزياء قيادة حقيقية</p>
+</section>
+
+<section id="sMenu" class="screen">
+  <header class="topbar"><a id="bHome" class="btn sm" href="/" hidden>🏠 المختبر الافتراضي</a><div class="wallet"><span><b class="ic coin"></b><i data-coins>0</i></span><span><b class="ic gem"></b><i data-dia>0</i></span></div></header>
+  <div class="menu-grid">
+    <div class="logo small"><span class="l1">OFFROAD</span><span class="l2">LEGENDS</span></div>
+    <div class="menu-sel"><div><small>المركبة</small><b id="mVeh"></b></div><div><small>العالم</small><b id="mWorld"></b></div><div><small>أفضل مسافة</small><b id="mBest"></b></div></div>
+    <button id="bPlay" class="btn big go">▶ انطلق</button>
+    <div class="menu-row">
+      <button class="btn" data-go="garage">🔧 المرآب</button>
+      <button class="btn" data-go="worlds">🌍 العوالم</button>
+      <button class="btn" data-go="chal">🏁 التحديات<i class="dot" id="chDot" hidden></i></button>
+      <button class="btn" data-go="ach">🏆 الإنجازات</button>
+      <button class="btn" data-go="set">⚙️ الإعدادات</button>
+    </div>
+    <div id="dailyCard" class="card daily"></div>
+  </div>
+</section>
+
+<section id="sGarage" class="screen garage">
+  <header class="topbar"><button class="btn back" data-go="menu">→ رجوع</button><h2>المرآب</h2><div class="wallet"><span><b class="ic coin"></b><i data-coins>0</i></span><span><b class="ic gem"></b><i data-dia>0</i></span></div></header>
+  <div class="g-left"><div id="vehList" class="veh-list"></div></div>
+  <div class="g-right">
+    <div class="g-head"><h3 id="gName"></h3><p id="gDesc"></p><div id="gStats" class="stats"></div><div id="gAction"></div></div>
+    <div id="upList" class="up-list"></div>
+  </div>
+  <p class="g-tip">اسحب لتدوير الكاميرا حول المركبة</p>
+</section>
+
+<section id="sWorlds" class="screen">
+  <header class="topbar"><button class="btn back" data-go="menu">→ رجوع</button><h2>العوالم</h2><div class="wallet"><span><b class="ic coin"></b><i data-coins>0</i></span><span><b class="ic gem"></b><i data-dia>0</i></span></div></header>
+  <p class="hint">العوالم متصلة: كل جولة تعبر من عالم إلى الذي يليه بسلاسة. الوصول إلى عالم جديد أثناء القيادة يفتحه مجاناً.</p>
+  <div id="worldList" class="world-list"></div>
+</section>
+
+<section id="sChal" class="screen">
+  <header class="topbar"><button class="btn back" data-go="menu">→ رجوع</button><h2>التحديات</h2><div class="wallet"><span><b class="ic coin"></b><i data-coins>0</i></span><span><b class="ic gem"></b><i data-dia>0</i></span></div></header>
+  <div id="chalList" class="list"></div>
+</section>
+
+<section id="sAch" class="screen">
+  <header class="topbar"><button class="btn back" data-go="menu">→ رجوع</button><h2>الإنجازات</h2><div class="wallet"><span><b class="ic coin"></b><i data-coins>0</i></span><span><b class="ic gem"></b><i data-dia>0</i></span></div></header>
+  <div id="achList" class="list grid2"></div>
+</section>
+
+<section id="sSet" class="screen">
+  <header class="topbar"><button class="btn back" data-go="menu">→ رجوع</button><h2>الإعدادات</h2></header>
+  <div class="card settings">
+    <label>المؤثرات الصوتية <input type="range" id="setSfx" min="0" max="1" step="0.05"></label>
+    <label>الموسيقى <input type="range" id="setMus" min="0" max="1" step="0.05"></label>
+    <label>جودة الرسوم <select id="setQ"><option value="auto">تلقائي</option><option value="low">منخفضة (أسرع)</option><option value="mid">متوسطة</option><option value="high">عالية</option></select></label>
+    <label>اهتزاز الكاميرا <input type="checkbox" id="setShake"></label>
+    <div class="ctl-help"><h4>التحكم</h4><p><b>الهاتف:</b> GAS للتسارع · BRAKE للفرملة والرجوع · BOOST للتعزيز · ↻ لإعادة التوازن.</p><p><b>الكمبيوتر:</b> → أو D تسارع · ← أو A فرامل · المسافة تعزيز · R إعادة التوازن · P أو Esc إيقاف.</p><p>في الهواء: التسارع يميل المركبة للخلف والفرملة تميلها للأمام — استخدمهما للهبوط على العجلات وتنفيذ الشقلبات.</p></div>
+    <div class="danger"><button id="bReset" class="btn red">مسح التقدّم</button><span id="resetConfirm" hidden>متأكد؟ <button id="bResetYes" class="btn red sm">نعم، امسح</button> <button id="bResetNo" class="btn sm">إلغاء</button></span></div>
+  </div>
+</section>
+
+<section id="sPause" class="screen dim">
+  <div class="card center"><h2>متوقف مؤقتاً</h2>
+    <button id="bResume" class="btn big go">▶ متابعة</button>
+    <button id="bRestart" class="btn">↻ إعادة الجولة</button>
+    <button id="bQuit" class="btn">القائمة الرئيسية</button>
+  </div>
+</section>
+
+<section id="sOver" class="screen dim">
+  <div class="card center results">
+    <h2 id="oTitle"></h2>
+    <div class="big-dist"><span id="oDist">0</span><small>متر</small></div>
+    <div id="oRecord" class="record" hidden>🏆 رقم قياسي جديد!</div>
+    <div id="oLines" class="lines"></div>
+    <div id="oUnlocks"></div>
+    <div class="row"><button id="bAgain" class="btn big go">↻ مرة أخرى</button><button id="bOGarage" class="btn">🔧 المرآب</button><button id="bOMenu" class="btn">القائمة</button></div>
+  </div>
+</section>
+
+<div id="banner" hidden></div>
+<div id="loading">جارٍ التحميل…</div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
