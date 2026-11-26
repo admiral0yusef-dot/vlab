@@ -3236,6 +3236,23 @@ function save(){try{localStorage.setItem(MEMK,JSON.stringify(mem))}catch(e){}}
 function nz(s){return String(s||'').replace(/[ً-ْـ]/g,'').replace(/[إأآا]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/ئ/g,'ي').toLowerCase()}
 var STOP={'في':1,'من':1,'على':1,'عن':1,'الى':1,'إلى':1,'ما':1,'هو':1,'هي':1,'كيف':1,'ليش':1,'شو':1,'او':1,'و':1,'مع':1,'بين':1,'تجربه':1,'درس':1,'اشرح':1,'علمني':1,'لي':1,'ال':1};
 function toks(s){return nz(s).split(/[^ء-يa-z0-9]+/).map(function(t){return t.replace(/^(وال|بال|كال|فال|لل|ال)/,'')}).filter(function(t){return t.length>1&&!STOP[t]})}
+// معجم العامية والمرادفات العلمية: كلمة الطالب ← مصطلحات المنهاج
+var LEX={'ماي':['ماء'],'مي':['ماء'],'ميه':['ماء'],'مويه':['ماء'],'ضو':['ضوء'],'ضوو':['ضوء'],'مغنطيس':['مغناطيس'],'ثلج':['حالات','تجمد'],'بخار':['حالات','تبخر'],'قلبي':['قلب','دمويه'],'قلب':['دمويه'],'بدق':['نبض'],'العب':['نشاط'],'عب':['نشاط'],'بلعب':['نشاط'],'اركض':['نشاط'],'بركض':['نشاط'],'رياضه':['نشاط'],'دم':['دمويه','دوره'],'بيلف':['دوره'],'نابض':['هوك','نوابض'],'زنبرك':['هوك','نوابض'],'ذيب':['مفترس','فريسه'],'ذئب':['مفترس','فريسه'],'اعدادهم':['مفترس','فريسه'],'كهربا':['كهرباء'],'تسخن':['تمدد','حراره'],'نجمه':['نجوم'],'جلفانيه':['جلفانيه','غلفانيه'],'غلفانيه':['جلفانيه','غلفانيه'],'كواكب':['شمسي'],'dna':['dna','وراثه'],'ph':['ph','حموض']};
+var RULES=[[['ضغط','حجم'],['بويل']],[['حجم','حراره'],['شارل']],[['تربه','ماء'],['تسرب']],[['قوه','تسارع'],['نيوتن','الثاني']],[['مفترس'],['فريسه']]];
+function qtoks(s){var t=nz(s).replace(/الحمض النووي|الحموض النوويه/g,' dna وراثه ').replace(/الدوره الدمويه/g,' دمويه ');var T=toks(t),out=T.slice();T.forEach(function(x){(LEX[x]||[]).forEach(function(y){out.push(y)});if(x.length>=5&&/(ات|ين|ون|يه|ه)$/.test(x))out.push(x.replace(/(ات|ين|ون|يه|ه)$/,''))});RULES.forEach(function(r){if(r[0].every(function(w){return out.some(function(x){return x.indexOf(w)>=0})}))r[1].forEach(function(y){out.push(y)})});var seen={};return out.filter(function(x){if(seen[x])return 0;seen[x]=1;return 1})}
+// ---------- حارس السلامة (طبقة أولى قبل النموذج) ----------
+function guard(text){var t=nz(text),T=toks(text),has=function(re){return re.test(t)},tok=function(a){return T.some(function(x){return a.indexOf(x)>=0})};
+  if(has(/(تجاهل|انس|الغ).{0,25}(تعليمات|اوامر|قواعد)|ignore (all |the )?(previous |prior |above )?instructions|system prompt|(اكشف|وريني|اعطيني).{0,20}(تعليمات|البرومبت|برومبت)|التعليمات السري/))return{kind:'block',reply:'ما بقدر أغيّر دوري أو أكشف تعليماتي 🙂 أنا هون لأساعدك بالعلوم. شو هدفك اليوم؟'};
+  if(has(/متفجر|قنبل|تفجير|سلاح|مخدر|سموم|غاز سام|ماده سامه|سم قاتل/)||tok(['سام','سامه']))return{kind:'block',reply:'هذا خطر وما بقدر أساعد فيه ⚠️ السلامة أولاً. بقدر أشرحلك الفكرة العلمية بأمان، أو أفتحلك تجربة افتراضية آمنة عن التفاعلات.'};
+  if(has(/جرعه|بنادول|مسكن|حبوب|دوا(ء)? (للصداع|للحراره|لل)|اخذ دوا|علاج ل/))return{kind:'medical',reply:'بالأمور الصحية والأدوية لازم تسأل الطبيب أو الصيدلي 🩺 بقدر أشرحلك علمياً كيف يعمل الجسم إذا حابب.'};
+  if(has(/رقم (تلفوني|هاتفي|جوالي|موبايلي)|عنوان (بيتي|سكني)|كلمه السر|كلمه المرور|باسورد|رقمي الوطني/))return{kind:'privacy',reply:'ما في داعي تشاركني أرقامك أو عنوانك 🔒 خلّي معلوماتك الشخصية لإلك. خلينا نكمل بالعلوم!'};
+  if(has(/(حل|حللي|احل|اكتبلي).{0,20}(الواجب|امتحان|الامتحان|الاختبار|الوزاره).{0,25}(كامل|كله|بدالي|عني|الاجابات)|ابعتلي الاجابات|حل الواجب كله|الواجب كله بدالي/))return{kind:'cheat',reply:'ما رح أحلّه عنك، بس رح أخليك تحلّه بنفسك وتفهمه 💪 قلّي أول سؤال، وبعطيك تلميح وخطوة بخطوة، أو خلينا نعمل اختبار تدريبي على نفس الدرس.'};
+  if(has(/الدوري|مباراه|كره القدم|قصيده|غزل|انتخاب|سياس|اغنيه|فيلم|مسلسل|نكته/))return{kind:'offtopic',reply:'هاد خارج تخصصي 😄 أنا وكيل علوم. بس إذا حابب: بقدر أشرحلك علمياً شي مرتبط، أو نبدأ بتشخيص مستواك.'};
+  return{kind:'allow'}}
+// ---------- استنتاج الصف من كلام الطالب ----------
+function inferGrade(text){var t=nz(text),m;if(/توجيهي|الثاني عشر|ثاني عشر/.test(t))return 12;if(/الحادي عشر|حادي عشر/.test(t))return 11;
+  m=t.match(/(?:صف|للصف|بالصف|الصف)\s*(\d{1,2})/);if(m&&+m[1]>=1&&+m[1]<=12)return +m[1];
+  var O={'العاشر':10,'التاسع':9,'الثامن':8,'السابع':7,'السادس':6,'الخامس':5,'الرابع':4,'الثالث':3,'الثاني':2,'الاول':1};for(var k in O)if(new RegExp('(صف|للصف|بالصف|الصف)\\s*'+k).test(t))return O[k];return 0}
 var CAT=null,catP=null;function cat(){if(CAT)return Promise.resolve(CAT);if(!catP)catP=fetch('/agent/catalog.json').then(function(r){return r.json()}).then(function(d){CAT=d;return d}).catch(function(){CAT=[];return CAT});return catP}
 function score(q,e){var s=0,n=nz(e.n),u=nz(e.u),r=nz(e.r),b=nz(e.b),hits=0;q.forEach(function(t){var h=0;if(n.indexOf(t)>=0){s+=4;h=1}if(u.indexOf(t)>=0){s+=1.5;h=1}if(r.indexOf(t)>=0){s+=1;h=1}if(b.indexOf(t)>=0)s+=3;hits+=h});return s+(hits>1?hits*1.5:0)}
 // ---------- context helpers ----------
@@ -3244,7 +3261,7 @@ function units(g){try{var U=window.YQ_UNITQUIZ;if(!U)return[];var subs=g<=8?[nul
 var SUBAR={phys:'فيزياء',chem:'كيمياء',bio:'أحياء',earth:'علوم الأرض'};
 function ulabel(u){return String(u.l||u.k||'').replace(/✨/g,'').trim()+(u.s?' ('+SUBAR[u.s]+')':'')}
 function uexp(u){return(u.rows||[]).map(function(i){return CAT&&CAT[i]?CAT[i].n:''}).join(' ')}
-function pickUnit(g,topic){var L=units(g);if(!L.length)return null;var q=toks(topic),best=null,bs=-1;L.forEach(function(u){var txt=nz(ulabel(u)+' '+uexp(u)),s=0;q.forEach(function(t){if(txt.indexOf(t)>=0)s+=1});if(s>bs){bs=s;best=u}});return{u:best,match:bs>0}}
+function pickUnit(g,topic){var L=units(g);if(!L.length)return null;var q=qtoks(topic),best=null,bs=-1;L.forEach(function(u){var txt=nz(ulabel(u)+' '+uexp(u)),s=0;q.forEach(function(t){if(txt.indexOf(t)>=0)s+=1});if(s>bs){bs=s;best=u}});return{u:best,match:bs>0}}
 function poolFor(g,u){try{var r=YQ_UNITQUIZ.pool(g,u.s,u.k);return(r&&r.all||[]).filter(function(x){return x&&x.o&&x.o.length>=2&&x.o[x.a]!=null})}catch(e){return[]}}
 function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.random()*(i+1)|0,t=a[i];a[i]=a[j];a[j]=t}return a}
 function pm(k){var x=mem.mastery[k];return x?(x.ok+1)/(x.n+2):.5}
@@ -3262,7 +3279,7 @@ var TOOLS={
     var U=g?units(g).map(ulabel).slice(0,14):[];
     return{grade:g||null,grade_note:g?undefined:'الصف غير معروف: اسأل الطالب عن صفه',name:(st&&st.name)||undefined,sessions:mem.sessions,topics_mastery:topics,recent_bank_exams:qb,reviews_due_today:due,units_in_grade:U,experiments_visited:st&&st.vis?Object.keys(st.vis).length:0};
   },
-  find_experiments:function(a){return cat().then(function(C){var q=toks(a.query),g=+a.grade||curGrade();if(!q.length)return{results:[]};var R=C.map(function(e){var s=score(q,e);if(g){if(e.g===g)s+=2;else if(Math.abs(e.g-g)>2)s-=1.5}return{e:e,s:s}}).filter(function(x){return x.s>=3}).sort(function(a,b){return b.s-a.s}).slice(0,5);
+  find_experiments:function(a){return cat().then(function(C){var q=qtoks(a.query),g=+a.grade||curGrade();if(!q.length)return{results:[]};var R=C.map(function(e){var s=score(q,e);if(g){if(e.g===g)s+=2;else if(Math.abs(e.g-g)>2)s-=1.5}return{e:e,s:s}}).filter(function(x){return x.s>=3}).sort(function(a,b){return b.s-a.s}).slice(0,5);
     return{results:R.map(function(x){return{sig:x.e.s,name:x.e.n,grade:x.e.g,subject:x.e.b,unit:x.e.u,variables:x.e.v,what_it_shows:x.e.r}}),note:R.length?undefined:'لا توجد تجربة مطابقة؛ لا تخترع واحدة'}})},
   open_experiment:function(a){
     var sig=String(a.sig||''),e=(CAT||[]).find(function(x){return x.s===sig});
@@ -3365,10 +3382,13 @@ async function runTool(name,args){
   return out;
 }
 async function turn(text){
-  busy=true;msg(text,'u');mem.sessions++;save();
+  if(busy)return;busy=true;msg(text,'u');mem.sessions++;save();
+  var G=guard(text);if(G.kind!=='allow'){step('🛡️','حارس السلامة: '+({block:'طلب غير آمن/محاولة تلاعب',medical:'سؤال طبي',privacy:'بيانات شخصية',cheat:'طلب حل جاهز',offtopic:'خارج موضوع العلوم'}[G.kind]),'لم يُرسل للنموذج ولم تُستدعَ أي أداة','ok');msg(G.reply);busy=false;return}
+  var ig=inferGrade(text);if(ig&&ig!==mem.grade){mem.grade=ig;save();var sel=P&&P.querySelector('select');if(sel)sel.value=String(ig);step('🎓','استنتجت الصف من كلامك: الصف '+ig,'','ok')}
   var ctx='[الصف المحفوظ: '+(curGrade()||'غير محدد')+'] [التاريخ: '+new Date().toISOString().slice(0,10)+']\n';
   var contents=mem.conv.slice(-8).concat([{role:'user',parts:[{text:ctx+text}]}]),model=null,finalText='',usedModel=true,tools=0;
   try{
+    if(window.VAGENT_FORCE_LOCAL)throw new Error('forced-local');
     for(var k=0;k<MAX_STEPS;k++){
       typing(true);var r=await callModel(contents,model);typing(false);model=r.model;
       contents.push({role:'model',parts:r.parts});
@@ -3406,8 +3426,9 @@ async function localPlan(text){
 }
 
 // public API (tests / other modules)
-window.VAgent={open:open,close:close,turn:turn,tools:TOOLS,mem:function(){return mem},reset:function(){mem=load.call(null);localStorage.removeItem(MEMK);mem=load()}};
+window.VAgent={version:'v2',guard:guard,inferGrade:inferGrade,_qtoks:qtoks,open:open,close:close,turn:turn,tools:TOOLS,mem:function(){return mem},_cat:cat,_pickUnit:pickUnit,_ulabel:ulabel,_clear:function(){B.innerHTML='';var t=document.getElementById('vaTask');if(t)t.remove()},reset:function(){mem=load.call(null);localStorage.removeItem(MEMK);mem=load()}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
+if(/agenteval=1/.test(location.search)){var es=document.createElement('script');es.src='/agent/eval.js';document.body.appendChild(es)}
 })();
 </script>
 <style>#bgOv{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:2147483000;background:#0b1029}#bgOv iframe{border:0;width:100%;height:100%}#bgOv button{position:absolute;top:8px;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:2;border:1px solid #fff6;background:#000a;color:#fff;border-radius:999px;padding:6px 14px;font:800 13px inherit;cursor:pointer}</style>
