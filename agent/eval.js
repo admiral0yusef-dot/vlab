@@ -19,10 +19,10 @@
     simT = setInterval(() => {
       const task = document.getElementById('vaTask');
       if (task) { const i = task.querySelector('input'); if (i) i.value = 'لاحظت أن النتيجة تتغير عندما غيّرت المتغير'; const b = task.querySelector('button'); b && b.click(); return; }
-      const opts = [...document.querySelectorAll('#vaPanel .va-card .va-opt')].filter(o => !o.classList.contains('ok') && !o.classList.contains('no'));
-      const answered = document.querySelector('#vaPanel .va-card .va-opt.ok, #vaPanel .va-card .va-opt.no');
+      const opts = [...VAgent._root().querySelectorAll('.va-card .va-opt')].filter(o => !o.classList.contains('ok') && !o.classList.contains('no'));
+      const answered = VAgent._root().querySelector('.va-card .va-opt.ok, .va-card .va-opt.no');
       if (opts.length && !answered) { opts[Math.floor(rnd() * opts.length)].click(); return; }
-      const ap = [...document.querySelectorAll('#vaPanel .va-card .va-btn')].find(b => /موافق/.test(b.textContent)); if (ap) ap.click();
+      const ap = [...VAgent._root().querySelectorAll('.va-card .va-btn')].find(b => /موافق/.test(b.textContent)); if (ap) ap.click();
     }, 350);
   }
   function stopStudent() { clearInterval(simT); simT = null; }
@@ -82,7 +82,7 @@
     window.VAGENT_FORCE_LOCAL = mode !== 'live';
     startStudent();
     try { await Promise.race([VAgent.turn(goal), sleep(mode === 'live' ? 150000 : 60000)]); } finally { stopStudent(); for (const k in orig) T[k] = orig[k]; }
-    const texts = [...document.querySelectorAll('#vaPanel .va-m.a')].map(x => x.textContent);
+    const texts = [...VAgent._root().querySelectorAll('.va-m.a')].map(x => x.textContent);
     return { calls, texts };
   }
 
