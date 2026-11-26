@@ -3169,6 +3169,247 @@ window.YQ_CLOUD={url:'https://uxjsbkopkizixvlzqmpk.supabase.co',key:'sb_publisha
 @media(max-width:900px){.ag-grid{grid-template-columns:1fr}.ag-log{position:static;max-height:none}}
 </style>
 <script src="js/app21.d8c116a74b.js"></script>
+<!-- ============================================================
+     وكيل المختبر (VLab Tutor Agent) — حلقة وكيل ذكي حقيقية:
+     يلاحظ → يخطط → ينفّذ بالأدوات → يتحقق → يبلّغ
+     الخادم (Edge Function: vlab-agent) يقرر الأداة؛ الأدوات تُنفَّذ هنا في الصفحة:
+     ملف الطالب · البحث في 629 تجربة · فتح تجربة بمهمة · شرح من قاعدة المعرفة ·
+     اختبار تفاعلي من بنك الأسئلة · جدولة مراجعة · تقرير للمعلم بموافقة.
+     إذا تعذّر النموذج يعمل «مخطط محلي» بنفس الأدوات حتى لا يتوقف الطالب.
+     ============================================================ -->
+<style>
+#vaFab{position:fixed;right:14px;right:max(14px,env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));z-index:2147482000;display:flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:11px 18px 11px 14px;background:linear-gradient(135deg,#4f46e5,#06b6d4);color:#fff;font:800 15px/1 inherit;box-shadow:0 10px 28px rgba(79,70,229,.45),0 0 0 3px rgba(255,255,255,.65);cursor:pointer;animation:vaPulse 2.8s ease-in-out infinite}
+#vaFab b{font-size:20px}#vaFab i{position:absolute;top:-4px;left:-4px;min-width:20px;height:20px;border-radius:10px;background:#ff3b30;color:#fff;font:800 11px/20px inherit;font-style:normal;text-align:center;padding:0 5px}
+@keyframes vaPulse{50%{box-shadow:0 10px 34px rgba(6,182,212,.7),0 0 0 5px rgba(255,255,255,.5)}}
+@media (prefers-reduced-motion:reduce){#vaFab{animation:none}}
+#vaPanel{position:fixed;top:0;bottom:0;right:0;width:440px;width:min(440px,100vw);z-index:2147482500;display:flex;flex-direction:column;background:#0f172a;color:#e2e8f0;box-shadow:-18px 0 50px rgba(2,6,23,.45);transform:translateX(105%);transition:transform .3s ease;direction:rtl;font-family:inherit}
+#vaPanel.open{transform:none}
+#vaPanel.mini{transform:translateY(calc(100% - 58px))}
+@media (max-width:640px){#vaPanel{top:auto;height:88vh;border-radius:22px 22px 0 0;width:100vw;transform:translateY(105%)}#vaPanel.open{transform:none}#vaPanel.mini{transform:translateY(calc(100% - 58px))}}
+.va-h{display:flex;align-items:center;gap:8px;padding:12px 14px;background:linear-gradient(135deg,#312e81,#0e7490);flex:none}
+.va-h .t{flex:1;min-width:0}.va-h b{display:block;font:800 16px/1.2 inherit}.va-h small{opacity:.85;font-size:11.5px}
+.va-h select{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:5px 6px;font:700 12px inherit}
+.va-h select option{color:#000}
+.va-ib{width:34px;height:34px;border-radius:10px;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:16px;cursor:pointer;flex:none}
+.va-body{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:9px;scroll-behavior:smooth}
+.va-m{max-width:90%;padding:10px 12px;border-radius:16px;line-height:1.75;font-size:14.5px;white-space:pre-wrap;word-wrap:break-word}
+.va-m.a{background:#1e293b;border:1px solid #334155;align-self:flex-start;border-bottom-right-radius:5px}
+.va-m.u{background:linear-gradient(135deg,#4f46e5,#0891b2);color:#fff;align-self:flex-end;border-bottom-left-radius:5px}
+.va-step{align-self:stretch;display:flex;gap:8px;align-items:flex-start;font-size:12.5px;color:#a5b4fc;background:rgba(99,102,241,.08);border:1px dashed rgba(129,140,248,.35);border-radius:12px;padding:7px 10px}
+.va-step .ic{flex:none;width:22px;height:22px;border-radius:7px;display:grid;place-items:center;background:rgba(99,102,241,.25);font-size:13px}
+.va-step .tx{flex:1;min-width:0}.va-step b{color:#c7d2fe}.va-step em{display:block;font-style:normal;color:#94a3b8;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.va-step.ok .ic{background:rgba(16,185,129,.25)}.va-step.run .ic{animation:vaSpin 1s linear infinite}
+@keyframes vaSpin{to{transform:rotate(360deg)}}
+.va-hide-steps .va-step{display:none}
+.va-card{align-self:stretch;background:#111c33;border:1px solid #3b4a6b;border-radius:16px;padding:12px}
+.va-card h5{margin:0 0 8px;font:800 14px inherit;color:#fde68a}
+.va-q{font-weight:700;margin-bottom:8px;line-height:1.7}
+.va-opt{display:block;width:100%;text-align:right;margin:5px 0;padding:9px 11px;border-radius:11px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font:600 14px inherit;cursor:pointer}
+.va-opt:hover{border-color:#6366f1}.va-opt.ok{background:#064e3b;border-color:#10b981}.va-opt.no{background:#4c1d1d;border-color:#ef4444}
+.va-bar{height:6px;border-radius:4px;background:#1e293b;overflow:hidden;margin-bottom:8px}.va-bar i{display:block;height:100%;background:linear-gradient(90deg,#6366f1,#06b6d4)}
+.va-btn{border:0;border-radius:11px;padding:9px 14px;font:800 13.5px inherit;cursor:pointer;background:linear-gradient(135deg,#4f46e5,#0891b2);color:#fff}
+.va-btn.g{background:#334155}.va-btn.y{background:linear-gradient(135deg,#f59e0b,#f97316)}
+.va-chips{display:flex;flex-wrap:wrap;gap:6px}
+.va-chip{border:1px solid #475569;background:#1e293b;color:#e2e8f0;border-radius:999px;padding:7px 12px;font:700 13px inherit;cursor:pointer}
+.va-chip:hover{border-color:#818cf8}
+.va-f{flex:none;display:flex;gap:7px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid #1e293b;background:#0b1222}
+.va-f input{flex:1;min-width:0;border-radius:12px;border:1px solid #334155;background:#111c33;color:#fff;padding:10px 12px;font:600 14.5px inherit}
+.va-f input:focus{outline:2px solid #6366f1;border-color:transparent}
+.va-tog{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#94a3b8;padding:0 14px 6px;background:#0f172a}
+.va-tog input{accent-color:#6366f1}
+#vaTask{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:2147482400;width:560px;width:min(560px,calc(100vw - 24px));background:#0f172a;color:#fff;border:2px solid #06b6d4;border-radius:16px;padding:10px 12px;box-shadow:0 14px 36px rgba(2,6,23,.5);direction:rtl;font-family:inherit}
+#vaTask b{color:#67e8f9}#vaTask p{margin:4px 0 8px;font-size:14px;line-height:1.7}
+#vaTask .r{display:flex;gap:6px}#vaTask input{flex:1;min-width:0;border-radius:10px;border:1px solid #334155;background:#111c33;color:#fff;padding:8px 10px;font:600 13.5px inherit}
+.va-typing{align-self:flex-start;display:flex;gap:4px;padding:10px 14px;background:#1e293b;border-radius:14px}.va-typing i{width:7px;height:7px;border-radius:50%;background:#818cf8;animation:vaDot 1s infinite}.va-typing i:nth-child(2){animation-delay:.15s}.va-typing i:nth-child(3){animation-delay:.3s}
+@keyframes vaDot{50%{transform:translateY(-5px);opacity:.5}}
+</style>
+<script>
+(function(){
+'use strict';
+if(window.VAgent)return;
+var CLOUD=window.YQ_CLOUD||{},URL=(CLOUD.url||'')+'/functions/v1/vlab-agent',KEY=CLOUD.key||'',MEMK='yq_vagent_v1',MAX_STEPS=9;
+var LBL={get_student_profile:['📋','قراءة ملف الطالب'],find_experiments:['🔎','البحث في تجارب المختبر'],open_experiment:['🧪','فتح تجربة بمهمة'],explain_concept:['📘','جلب الشرح من قاعدة المعرفة'],give_quiz:['📝','اختبار تفاعلي'],schedule_review:['🗓️','جدولة مراجعة'],draft_teacher_report:['📨','تقرير للمعلم']};
+// ---------- memory (per device) ----------
+var mem=load();function load(){try{var m=JSON.parse(localStorage.getItem(MEMK)||'null');if(m&&typeof m==='object')return Object.assign({grade:0,mastery:{},reviews:[],reports:[],sessions:0,conv:[],showSteps:true,log:[]},m)}catch(e){}return{grade:0,mastery:{},reviews:[],reports:[],sessions:0,conv:[],showSteps:true,log:[]}}
+function save(){try{localStorage.setItem(MEMK,JSON.stringify(mem))}catch(e){}}
+// ---------- Arabic normalisation + catalog search ----------
+function nz(s){return String(s||'').replace(/[ً-ْـ]/g,'').replace(/[إأآا]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/ؤ/g,'و').replace(/ئ/g,'ي').toLowerCase()}
+var STOP={'في':1,'من':1,'على':1,'عن':1,'الى':1,'إلى':1,'ما':1,'هو':1,'هي':1,'كيف':1,'ليش':1,'شو':1,'او':1,'و':1,'مع':1,'بين':1,'تجربه':1,'درس':1,'اشرح':1,'علمني':1,'لي':1,'ال':1};
+function toks(s){return nz(s).split(/[^ء-يa-z0-9]+/).map(function(t){return t.replace(/^(وال|بال|كال|فال|لل|ال)/,'')}).filter(function(t){return t.length>1&&!STOP[t]})}
+var CAT=null,catP=null;function cat(){if(CAT)return Promise.resolve(CAT);if(!catP)catP=fetch('/agent/catalog.json').then(function(r){return r.json()}).then(function(d){CAT=d;return d}).catch(function(){CAT=[];return CAT});return catP}
+function score(q,e){var s=0,n=nz(e.n),u=nz(e.u),r=nz(e.r),b=nz(e.b),hits=0;q.forEach(function(t){var h=0;if(n.indexOf(t)>=0){s+=4;h=1}if(u.indexOf(t)>=0){s+=1.5;h=1}if(r.indexOf(t)>=0){s+=1;h=1}if(b.indexOf(t)>=0)s+=3;hits+=h});return s+(hits>1?hits*1.5:0)}
+// ---------- context helpers ----------
+function curGrade(a){var g=+(a&&a.grade)||+mem.grade||0;if(!g&&window.yqAgent){try{g=+yqAgent.state().g||0}catch(e){}}return g>=1&&g<=12?g:0}
+function units(g){try{var U=window.YQ_UNITQUIZ;if(!U)return[];var subs=g<=8?[null]:['phys','chem','bio','earth'],out=[];subs.forEach(function(s){(U.units(g,s)||[]).forEach(function(u){out.push({k:u.k,l:u.l,rows:u.rows||[],s:s,g:g})})});return out}catch(e){return[]}}
+var SUBAR={phys:'فيزياء',chem:'كيمياء',bio:'أحياء',earth:'علوم الأرض'};
+function ulabel(u){return String(u.l||u.k||'').replace(/✨/g,'').trim()+(u.s?' ('+SUBAR[u.s]+')':'')}
+function uexp(u){return(u.rows||[]).map(function(i){return CAT&&CAT[i]?CAT[i].n:''}).join(' ')}
+function pickUnit(g,topic){var L=units(g);if(!L.length)return null;var q=toks(topic),best=null,bs=-1;L.forEach(function(u){var txt=nz(ulabel(u)+' '+uexp(u)),s=0;q.forEach(function(t){if(txt.indexOf(t)>=0)s+=1});if(s>bs){bs=s;best=u}});return{u:best,match:bs>0}}
+function poolFor(g,u){try{var r=YQ_UNITQUIZ.pool(g,u.s,u.k);return(r&&r.all||[]).filter(function(x){return x&&x.o&&x.o.length>=2&&x.o[x.a]!=null})}catch(e){return[]}}
+function shuf(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.random()*(i+1)|0,t=a[i];a[i]=a[j];a[j]=t}return a}
+function pm(k){var x=mem.mastery[k];return x?(x.ok+1)/(x.n+2):.5}
+
+// ============================================================
+// TOOLS (executed in the page)
+// ============================================================
+var TOOLS={
+  get_student_profile:function(){
+    var g=curGrade(),st=null;try{st=window.yqAgent&&yqAgent.state()}catch(e){}
+    var topics=Object.keys(mem.mastery).map(function(k){var m=mem.mastery[k];return{topic:k,answered:m.n,correct:m.ok,mastery:Math.round(pm(k)*100)}}).sort(function(a,b){return a.mastery-b.mastery}).slice(0,8);
+    if(st&&st.m&&g){var L=units(g),lab={};L.forEach(function(u){lab[g+'|'+(u.s||'sci')+'|'+u.k]=ulabel(u)});Object.keys(st.m).forEach(function(k){var m=st.m[k];if(lab[k]&&m.n)topics.push({topic:lab[k],answered:m.n,correct:m.ok,mastery:Math.round((m.ok+1)/(m.n+2)*100),source:'وكيل المعلم'})})}
+    var qb=[];try{qb=JSON.parse(localStorage.getItem('yq_qb_records')||'[]').slice(-3).map(function(r){return r.pct+'%'})}catch(e){}
+    var now=Date.now(),due=mem.reviews.filter(function(r){return r.due<=now&&!r.done}).map(function(r){return r.topic});
+    var U=g?units(g).map(ulabel).slice(0,14):[];
+    return{grade:g||null,grade_note:g?undefined:'الصف غير معروف: اسأل الطالب عن صفه',name:(st&&st.name)||undefined,sessions:mem.sessions,topics_mastery:topics,recent_bank_exams:qb,reviews_due_today:due,units_in_grade:U,experiments_visited:st&&st.vis?Object.keys(st.vis).length:0};
+  },
+  find_experiments:function(a){return cat().then(function(C){var q=toks(a.query),g=+a.grade||curGrade();if(!q.length)return{results:[]};var R=C.map(function(e){var s=score(q,e);if(g){if(e.g===g)s+=2;else if(Math.abs(e.g-g)>2)s-=1.5}return{e:e,s:s}}).filter(function(x){return x.s>=3}).sort(function(a,b){return b.s-a.s}).slice(0,5);
+    return{results:R.map(function(x){return{sig:x.e.s,name:x.e.n,grade:x.e.g,subject:x.e.b,unit:x.e.u,variables:x.e.v,what_it_shows:x.e.r}}),note:R.length?undefined:'لا توجد تجربة مطابقة؛ لا تخترع واحدة'}})},
+  open_experiment:function(a){
+    var sig=String(a.sig||''),e=(CAT||[]).find(function(x){return x.s===sig});
+    if(!e)return{opened:false,error:'معرّف غير موجود — استخدم sig من find_experiments'};
+    var cs=document.querySelectorAll('#cards > .card'),card=null;for(var i=0;i<cs.length;i++)if(cs[i].getAttribute('data-sig')===sig){card=cs[i];break}
+    if(card){try{card.click();scrollTo(0,0)}catch(x){}}
+    if(innerWidth<=640)mini(true);
+    return new Promise(function(res){
+      var t=document.getElementById('vaTask');if(t)t.remove();t=document.createElement('div');t.id='vaTask';
+      t.innerHTML='<b>🎯 مهمة من وكيل المختبر — '+esc(e.n)+'</b><p>'+esc(a.task||'جرّب المتغيرات ولاحظ النتيجة')+'</p><div class="r"><input placeholder="ماذا لاحظت؟ (اختياري)" maxlength="200"><button class="va-btn">أنهيت ✓</button></div>';
+      document.body.appendChild(t);var done=false,fin=function(skip){if(done)return;done=true;var obs=t.querySelector('input').value.trim();t.remove();mini(false);res({opened:!!card,name:e.n,student_finished:!skip,student_observation:obs||undefined})};
+      t.querySelector('button').onclick=function(){fin(false)};t.querySelector('input').onkeydown=function(ev){if(ev.key==='Enter')fin(false)};
+      setTimeout(function(){fin(true)},6*60*1000);
+    });
+  },
+  explain_concept:function(a){var t='';try{t=window.yqAskScience?String(yqAskScience(a.question)||''):''}catch(e){}t=t.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();return t?{source:'قاعدة معرفة المنهاج الأردني',text:t.slice(0,1400)}:{found:false,note:'لا يوجد شرح في قاعدة المعرفة'}},
+  give_quiz:function(a){return cat().then(function(){return quiz(a)})}
+};
+function quiz(a){
+  {
+    var g=curGrade(a);if(!g)return{error:'grade_unknown',note:'اسأل الطالب عن صفه أولاً'};
+    var pu=pickUnit(g,a.topic);if(!pu||!pu.u)return{error:'no_bank',note:'لا يوجد بنك أسئلة لهذا الصف'};
+    var P=shuf(poolFor(g,pu.u)),n=Math.max(2,Math.min(5,+a.n||3)),Q=P.slice(0,n);if(!Q.length)return{error:'no_questions'};
+    var label=ulabel(pu.u);
+    return new Promise(function(res){
+      var c=card('📝 اختبار قصير: '+label),i=0,ok=0,missed=[];
+      function show(){var x=Q[i],ops=shuf(x.o.map(function(o,k){return{t:o,c:k===x.a}}));
+        c.innerHTML='<h5>📝 '+esc(label)+' — سؤال '+(i+1)+' من '+Q.length+'</h5><div class="va-bar"><i style="width:'+(i/Q.length*100)+'%"></i></div><div class="va-q">'+esc(x.q)+'</div>'+ops.map(function(o,k){return'<button class="va-opt" data-k="'+k+'">'+esc(o.t)+'</button>'}).join('');
+        c.querySelectorAll('.va-opt').forEach(function(b){b.onclick=function(){if(c._lock)return;c._lock=1;var k=+b.dataset.k,good=ops[k].c;b.classList.add(good?'ok':'no');if(!good){c.querySelectorAll('.va-opt').forEach(function(z){if(ops[+z.dataset.k].c)z.classList.add('ok')});missed.push({question:x.q.slice(0,160),correct:String(x.o[x.a]).slice(0,80),chosen:String(ops[k].t).slice(0,80)})}else ok++;
+          try{window.YQ_SFX&&YQ_SFX[good?'ok':'no']&&YQ_SFX[good?'ok':'no']()}catch(e){}
+          setTimeout(function(){c._lock=0;i++;if(i<Q.length)show();else end()},good?650:1300)}});scrollDown()}
+      function end(){var m=mem.mastery[label]||(mem.mastery[label]={n:0,ok:0});m.n+=Q.length;m.ok+=ok;mem.log.unshift({t:Date.now(),topic:label,score:ok,total:Q.length});mem.log.length=Math.min(mem.log.length,50);save();
+        c.innerHTML='<h5>✅ النتيجة: '+ok+' من '+Q.length+'</h5><div class="va-bar"><i style="width:'+(ok/Q.length*100)+'%"></i></div>';res({unit:label,score:ok,total:Q.length,missed:missed,mastery_now:Math.round(pm(label)*100)})}
+      show();
+    });
+  }
+}
+Object.assign(TOOLS,{
+  schedule_review:function(a){var d=Math.max(1,Math.min(14,+a.days||2)),due=Date.now()+d*864e5;mem.reviews=mem.reviews.filter(function(r){return r.topic!==a.topic});mem.reviews.push({topic:String(a.topic).slice(0,80),due:due,done:false});save();badge();return{scheduled:true,topic:a.topic,due_date:new Date(due).toLocaleDateString('ar-JO')}},
+  draft_teacher_report:function(a){
+    var rep={at:new Date().toISOString(),grade:curGrade()||null,summary:String(a.summary||'').slice(0,600),next_steps:String(a.next_steps||'').slice(0,500),log:mem.log.slice(0,6)};
+    var c=card('📨 تقرير للمعلم (بانتظار موافقتك)');
+    c.innerHTML='<h5>📨 تقرير للمعلم — بانتظار موافقتك</h5><div style="line-height:1.8;font-size:13.5px"><b>الملخص:</b> '+esc(rep.summary)+'<br><b>الخطوات القادمة:</b> '+esc(rep.next_steps)+'</div><div class="va-chips" style="margin-top:8px"><button class="va-btn">✔ موافق، احفظ وانسخ للمعلم</button><button class="va-btn g">لا ترسل</button></div>';
+    c.querySelector('.va-btn').onclick=function(){mem.reports.unshift(rep);mem.reports.length=Math.min(mem.reports.length,20);save();var txt='تقرير وكيل المختبر VLab\nالصف: '+(rep.grade||'-')+'\n'+rep.summary+'\nالخطوات: '+rep.next_steps;try{navigator.clipboard.writeText(txt).catch(function(){})}catch(e){}c.innerHTML='<h5>✅ حُفظ التقرير ونُسخ — أرسله لمعلمك أو شاركه من «وكيل المعلم»</h5>'};
+    c.querySelector('.va-btn.g').onclick=function(){c.innerHTML='<h5>تم الإلغاء — لم يُرسل شيء</h5>'};
+    return{status:'awaiting_human_approval',note:'لا يُرسل شيء دون موافقة صريحة'};
+  }
+});
+
+// ============================================================
+// UI
+// ============================================================
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+var P,B,IN,busy=false;
+function build(){
+  var f=document.createElement('button');f.id='vaFab';f.type='button';f.innerHTML='<b>🤖</b> وكيل المختبر<i hidden></i>';f.onclick=open;document.body.appendChild(f);
+  P=document.createElement('section');P.id='vaPanel';P.setAttribute('aria-label','وكيل المختبر');
+  var gopt='<option value="0">الصف</option>';for(var g=1;g<=12;g++)gopt+='<option value="'+g+'"'+(mem.grade===g?' selected':'')+'>الصف '+g+'</option>';
+  P.innerHTML='<div class="va-h"><button class="va-ib" data-a="mini" title="تصغير">▾</button><div class="t"><b>🤖 وكيل المختبر</b><small>يخطط وينفّذ: يقيس مستواك، يفتح التجربة المناسبة، يختبرك، ويتابعك</small></div><select aria-label="الصف">'+gopt+'</select><button class="va-ib" data-a="x" title="إغلاق">✕</button></div>'+
+    '<label class="va-tog"><input type="checkbox" '+(mem.showSteps?'checked':'')+'> إظهار خطوات الوكيل (الأدوات والقرارات)</label><div class="va-body"></div>'+
+    '<form class="va-f"><input placeholder="اكتب هدفك… مثلاً: حضّرني لاختبار الكيمياء الحركية" maxlength="400"><button class="va-btn" type="submit">إرسال</button></form>';
+  document.body.appendChild(P);B=P.querySelector('.va-body');IN=P.querySelector('input:not([type=checkbox])');
+  P.querySelector('[data-a=x]').onclick=close;P.querySelector('[data-a=mini]').onclick=function(){mini(!P.classList.contains('mini'))};
+  P.querySelector('.va-h').addEventListener('click',function(e){if(P.classList.contains('mini')&&!e.target.closest('select,button'))mini(false)});
+  P.querySelector('select').onchange=function(e){mem.grade=+e.target.value;save()};
+  var tg=P.querySelector('.va-tog input');B.classList.toggle('va-hide-steps',!mem.showSteps);tg.onchange=function(){mem.showSteps=tg.checked;B.classList.toggle('va-hide-steps',!tg.checked);save()};
+  P.querySelector('form').onsubmit=function(e){e.preventDefault();var v=IN.value.trim();if(!v||busy)return;IN.value='';turn(v)};
+  badge();
+}
+function badge(){var f=document.getElementById('vaFab');if(!f)return;var n=mem.reviews.filter(function(r){return r.due<=Date.now()&&!r.done}).length,i=f.querySelector('i');i.hidden=!n;i.textContent=n}
+function open(){P.classList.add('open');P.classList.remove('mini');document.getElementById('vaFab').hidden=true;if(!B.children.length)greet();setTimeout(function(){IN.focus()},300)}
+function close(){P.classList.remove('open','mini');document.getElementById('vaFab').hidden=false}
+function mini(on){if(!P.classList.contains('open'))return;P.classList.toggle('mini',on)}
+function scrollDown(){B.scrollTop=B.scrollHeight}
+function msg(t,who){var d=document.createElement('div');d.className='va-m '+(who||'a');d.textContent=t;B.appendChild(d);scrollDown();return d}
+function card(){var d=document.createElement('div');d.className='va-card';B.appendChild(d);scrollDown();return d}
+function step(icon,title,detail,cls){var d=document.createElement('div');d.className='va-step '+(cls||'');d.innerHTML='<span class="ic">'+icon+'</span><span class="tx"><b>'+esc(title)+'</b>'+(detail?'<em>'+esc(detail)+'</em>':'')+'</span>';B.appendChild(d);scrollDown();return d}
+function typing(on){var t=B.querySelector('.va-typing');if(on&&!t){t=document.createElement('div');t.className='va-typing';t.innerHTML='<i></i><i></i><i></i>';B.appendChild(t);scrollDown()}if(!on&&t)t.remove()}
+function chips(list){var c=document.createElement('div');c.className='va-chips';list.forEach(function(x){var b=document.createElement('button');b.className='va-chip';b.type='button';b.textContent=x[0];b.onclick=function(){if(!busy){c.remove();turn(x[1])}};c.appendChild(b)});B.appendChild(c);scrollDown()}
+function greet(){
+  var due=mem.reviews.filter(function(r){return r.due<=Date.now()&&!r.done});
+  msg(due.length?('أهلاً من جديد 👋 عندك مراجعة مستحقة اليوم: '+due.map(function(r){return r.topic}).join('، ')+'. نبدأ فيها؟'):'أهلاً 👋 أنا وكيل المختبر. أعطيني هدف، وأنا بخطط وبنفّذ معك: بقيس مستواك، بفتحلك التجربة المناسبة، بختبرك، وبتابعك. اختار صفك من فوق ثم ابدأ:');
+  var L=[['🩺 شخّص نقاط ضعفي','شخّص نقاط ضعفي وساعدني أقويها'],['📝 حضّرني لاختبار','حضّرني لاختبار قريب في مادتي'],['📘 علّمني درساً بتجربة','علّمني درساً بتجربة عملية']];
+  if(due.length)L.unshift(['🔁 ابدأ المراجعة','راجعني في: '+due[0].topic]);chips(L);
+}
+function argSum(a){try{var s=Object.keys(a||{}).map(function(k){return k+': '+String(a[k]).slice(0,50)}).join(' · ');return s}catch(e){return''}}
+function resSum(name,r){try{if(!r)return'';if(r.error)return'⚠️ '+(r.note||r.error);if(name==='find_experiments')return(r.results||[]).map(function(x){return x.name}).slice(0,3).join('، ')||'لا نتائج';if(name==='give_quiz')return'النتيجة '+r.score+'/'+r.total+' · الإتقان الآن '+r.mastery_now+'%';if(name==='get_student_profile')return'الصف '+(r.grade||'؟')+' · مواضيع مُقاسة: '+(r.topics_mastery||[]).length+' · مراجعات اليوم: '+(r.reviews_due_today||[]).length;if(name==='open_experiment')return r.opened?('فُتحت: '+r.name+(r.student_observation?' · ملاحظة الطالب: '+r.student_observation:'')):'لم تُفتح';if(name==='explain_concept')return r.text?r.text.slice(0,70)+'…':'لا يوجد';if(name==='schedule_review')return'موعدها '+r.due_date;if(name==='draft_teacher_report')return'بانتظار موافقة بشرية';return''}catch(e){return''}}
+
+// ============================================================
+// AGENT LOOP (model decides → page executes tools → results back)
+// ============================================================
+async function callModel(contents,model){
+  var r=await fetch(URL,{method:'POST',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+KEY},body:JSON.stringify({contents:contents,model:model||undefined}),signal:AbortSignal.timeout?AbortSignal.timeout(32000):undefined});
+  if(!r.ok)throw new Error('http '+r.status);var d=await r.json();if(!d.parts)throw new Error('bad');return d;
+}
+async function runTool(name,args){
+  var L=LBL[name]||['🔧',name],s=step(L[0],L[1],argSum(args),'run'),out;
+  try{out=await Promise.resolve(TOOLS[name]?TOOLS[name](args||{}):{error:'unknown_tool'})}catch(e){out={error:'tool_failed'}}
+  s.classList.remove('run');s.classList.add('ok');var em=s.querySelector('em')||s.querySelector('.tx').appendChild(document.createElement('em'));em.textContent='← '+resSum(name,out);
+  return out;
+}
+async function turn(text){
+  busy=true;msg(text,'u');mem.sessions++;save();
+  var ctx='[الصف المحفوظ: '+(curGrade()||'غير محدد')+'] [التاريخ: '+new Date().toISOString().slice(0,10)+']\n';
+  var contents=mem.conv.slice(-8).concat([{role:'user',parts:[{text:ctx+text}]}]),model=null,finalText='',usedModel=true,tools=0;
+  try{
+    for(var k=0;k<MAX_STEPS;k++){
+      typing(true);var r=await callModel(contents,model);typing(false);model=r.model;
+      contents.push({role:'model',parts:r.parts});
+      var texts=r.parts.filter(function(p){return p.text}).map(function(p){return p.text}).join('\n').trim(),calls=r.parts.filter(function(p){return p.functionCall});
+      if(texts){msg(texts);finalText=texts}
+      if(!calls.length)break;
+      if(k===0)step('🧠','الوكيل وضع خطة ويستدعي الأدوات',model?('النموذج: '+model):'');
+      var resp=[];for(var j=0;j<calls.length;j++){var fc=calls[j].functionCall;tools++;var out=await runTool(fc.name,fc.args);var fr={name:fc.name,response:{result:out}};if(fc.id)fr.id=fc.id;resp.push({functionResponse:fr})}
+      contents.push({role:'user',parts:resp});
+    }
+  }catch(e){typing(false);usedModel=false;step('🧭','النموذج غير متاح الآن — المخطط المحلي يكمل بنفس الأدوات','',"");await localPlan(text)}
+  if(usedModel){mem.conv=mem.conv.concat([{role:'user',parts:[{text:text}]},{role:'model',parts:[{text:finalText||'تم.'}]}]).slice(-10);save()}
+  busy=false;badge();
+}
+// ---------- local planner (no LLM): same tools, deterministic plan ----------
+async function localPlan(text){
+  var t=nz(text),g=curGrade();
+  var P=await runTool('get_student_profile',{});
+  if(!g){msg('قبل ما نبدأ: اختار صفك من القائمة فوق 👆 وبعدين اكتب هدفك مرة ثانية.');return}
+  var learn=!/ضعف|شخص|مستوا|حضر|اختبار|امتحان|راجع|مراجع/.test(t);
+  var rest=nz(text).replace(/علمني|اشرح|درسا?|بتجربه|عمليه|حضرني|لاختبار|اختبار|امتحان|قريب|شخص|نقاط|ضعفي|وساعدني|اقويها|راجعني|راجع|مراجعه|في|مادتي|ماده|العلوم|لي/g,' ').trim(),hasTopic=toks(rest).length>0;
+  var topic=hasTopic?rest:learn?text:((P.reviews_due_today&&P.reviews_due_today[0])||(P.topics_mastery&&P.topics_mastery[0]&&P.topics_mastery[0].mastery<70&&P.topics_mastery[0].topic)||(P.units_in_grade||[])[0]||text);
+  if(learn){var E=await runTool('explain_concept',{question:topic});if(E.text)msg(E.text.slice(0,500))}
+  var Q=await runTool('give_quiz',{topic:topic,n:3});
+  if(Q.error){msg('ما لقيت بنك أسئلة مناسب لهذا الموضوع، جرّب تكتب اسم الوحدة.');return}
+  if(Q.score<Q.total){
+    if(!learn){var E2=await runTool('explain_concept',{question:Q.missed[0]?Q.missed[0].question:Q.unit});if(E2.text)msg('خلينا نوضّح النقطة اللي غلطت فيها: '+E2.text.slice(0,420))}
+    var X=await runTool('find_experiments',{query:Q.unit+' '+topic,grade:g});
+    if(X.results&&X.results[0]){var e=X.results[0];await runTool('open_experiment',{sig:e.sig,task:'غيّر «'+((e.variables||[])[0]||'المتغير الأول')+'» تدريجياً ولاحظ كيف تتغير النتيجة، ثم اكتب ملاحظتك.'})}
+    var Q2=await runTool('give_quiz',{topic:Q.unit,n:2});var ok2=!Q2.error;
+    await runTool('schedule_review',{topic:Q.unit,days:ok2&&Q2.score===Q2.total?3:1});
+    msg('بدأنا بـ '+Q.score+'/'+Q.total+(ok2?(' وبعد التجربة صار '+Q2.score+'/'+Q2.total):'')+'. جدولتلك مراجعة لـ «'+Q.unit+'» حتى نثبّت الفكرة.');
+  }else{await runTool('schedule_review',{topic:Q.unit,days:5});msg('أحسنت! '+Q.score+'/'+Q.total+' في «'+Q.unit+'» 👏 جدولتلك مراجعة خفيفة بعد 5 أيام.')}
+  await runTool('draft_teacher_report',{summary:'جلسة مع وكيل المختبر في «'+Q.unit+'»: النتيجة '+Q.score+'/'+Q.total+'.',next_steps:'مراجعة مجدولة، وتجربة تطبيقية على المفهوم.'});
+}
+
+// public API (tests / other modules)
+window.VAgent={open:open,close:close,turn:turn,tools:TOOLS,mem:function(){return mem},reset:function(){mem=load.call(null);localStorage.removeItem(MEMK);mem=load()}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',build);else build();
+})();
+</script>
 <style>#bgOv{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:2147483000;background:#0b1029}#bgOv iframe{border:0;width:100%;height:100%}#bgOv button{position:absolute;top:8px;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:2;border:1px solid #fff6;background:#000a;color:#fff;border-radius:999px;padding:6px 14px;font:800 13px inherit;cursor:pointer}</style>
 <script src="js/app22.31154a635a.js"></script>
 <script>/*__yqReady*/(function(){var r=window.requestAnimationFrame||function(f){setTimeout(f,16)};r(function(){r(function(){setTimeout(function(){if(window.__yqBootBye)window.__yqBootBye()},60)})})})();</script>
