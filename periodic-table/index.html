@@ -3462,6 +3462,24 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 if(/agenteval=1/.test(location.search)){var es=document.createElement('script');es.src='/agent/eval.js';document.body.appendChild(es)}
 })();
 </script>
+<script>
+/* زر لوحة الإحصائيات في صفحة «عن الأستاذ»: بارز للمدير المسجّل، ورابط خفيف لغيره */
+(function(){
+'use strict';
+function sess(){try{var a=JSON.parse(localStorage.getItem('yq_acct_v1')||'{}');return a&&a.tok?a:null}catch(e){return null}}
+function mount(){
+  var ab=document.getElementById('ab'),panel=ab&&ab.querySelector('.panel');if(!panel)return setTimeout(mount,800);
+  if(document.getElementById('yqAdminBox'))return;
+  var box=document.createElement('div');box.id='yqAdminBox';box.style.cssText='margin:16px auto 0;text-align:center';
+  box.innerHTML='<a id="yqAdminLink" href="/stats/" style="font-size:12px;color:var(--mu);text-decoration:none;opacity:.75">🔐 دخول الإدارة</a>';
+  var note=panel.querySelector('.source-note');panel.insertBefore(box,note||null);
+  var a=sess(),C=window.YQ_CLOUD;if(!a||!C||!C.url||a.role==='stu')return;
+  fetch(C.url.replace(/\/$/,'')+'/rest/v1/rpc/vl_is_admin',{method:'POST',headers:{apikey:C.key,Authorization:'Bearer '+a.tok,'Content-Type':'application/json'},body:'{}'})
+   .then(function(r){return r.ok?r.json():false}).then(function(ok){if(ok!==true)return;
+     box.innerHTML='<a class="btn" href="/stats/" style="display:inline-block;text-decoration:none">📊 لوحة الإحصائيات</a><div style="font-size:12px;color:var(--mu);margin-top:4px">تظهر لك لأنك مدير الموقع</div>'}).catch(function(){})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(mount,600)});else setTimeout(mount,600);
+})();
+</script>
 <style>#bgOv{position:fixed;top:0;right:0;bottom:0;left:0;inset:0;z-index:2147483000;background:#0b1029}#bgOv iframe{border:0;width:100%;height:100%}#bgOv button{position:absolute;top:8px;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:2;border:1px solid #fff6;background:#000a;color:#fff;border-radius:999px;padding:6px 14px;font:800 13px inherit;cursor:pointer}</style>
 <script src="js/app22.31154a635a.js"></script>
 <script>/*__yqReady*/(function(){var r=window.requestAnimationFrame||function(f){setTimeout(f,16)};r(function(){r(function(){setTimeout(function(){if(window.__yqBootBye)window.__yqBootBye()},60)})})})();</script>

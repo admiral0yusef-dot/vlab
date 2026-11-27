@@ -108,9 +108,12 @@ function api(path,body,retry){
   return fetch(SB+path,{method:'POST',headers:h,body:JSON.stringify(body||{})}).then(function(r){
     if(r.status===401&&!retry&&S&&S.rt)return refresh().then(function(){return api(path,body,1)});
     return r.text().then(function(t){var j=null;try{j=t?JSON.parse(t):null}catch(e){}if(!r.ok)throw new Error((j&&(j.message||j.msg||j.error_description||j.error))||('HTTP '+r.status));return j})})}
-function refresh(){return fetch(SB+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:S.rt})}).then(function(r){return r.json()}).then(function(j){if(!j.access_token){out();throw new Error('انتهت الجلسة')}S={tok:j.access_token,rt:j.refresh_token};ss('vl_stats_s',S)})}
+function refresh(){return fetch(SB+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:S.rt})}).then(function(r){return r.json()}).then(function(j){if(!j.access_token){out();throw new Error('انتهت الجلسة')}S={tok:j.access_token,rt:j.refresh_token,site:S.site};ss('vl_stats_s',S);if(S.site)siteSave(j)})}
+// جلسة الموقع نفسها (yq_acct_v1): دخول مباشر دون كلمة مرور، وحفظ الرمز المجدَّد فيها حتى لا تنقطع جلسة الموقع
+function siteGet(){try{var a=JSON.parse(localStorage.getItem('yq_acct_v1')||'{}');return a&&a.tok&&a.role!=='stu'?a:null}catch(e){return null}}
+function siteSave(j){try{var a=JSON.parse(localStorage.getItem('yq_acct_v1')||'{}');if(a&&a.tok){a.tok=j.access_token;a.rt=j.refresh_token;localStorage.setItem('yq_acct_v1',JSON.stringify(a))}}catch(e){}}
 function out(){S=null;ss('vl_stats_s',null);clearInterval(TIMER);show('login')}
-document.querySelectorAll('[data-out]').forEach(function(b){b.onclick=out});
+document.querySelectorAll('[data-out]').forEach(function(b){b.onclick=function(){var w=S&&S.site;out();if(w)location.href='/'}});
 
 $('go').onclick=function(){var m=$('lm');m.className='msg';m.textContent='جارٍ الدخول…';
   fetch(SB+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:emailOf($('u').value),password:$('pw').value})})
@@ -177,7 +180,7 @@ function hours(rows){var el=$('hours'),m={};rows.forEach(function(r){m[r.h]=r.n}
   var W=480,Hh=150,B=20,bw=W/24,s='';for(var h=0;h<24;h++){var v=m[h]||0,bh=(Hh-B-6)*v/mx,xx=W-(h+1)*bw+2;s+='<rect x="'+xx+'" y="'+(Hh-B-bh)+'" width="'+(bw-4)+'" height="'+Math.max(v?2:0,bh)+'" rx="3" fill="var(--acc)"><title>الساعة '+h+':00 — '+v+' زيارة</title></rect>';if(h%3===0)s+='<text x="'+(xx+bw/2-2)+'" y="'+(Hh-5)+'" font-size="10" fill="var(--mut)" text-anchor="middle">'+h+'</text>'}
   el.innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" role="img" aria-label="الزيارات حسب الساعة">'+s+'</svg>'}
 
-S=ss('vl_stats_s');if(S&&S.tok)start();else show('login');
+S=ss('vl_stats_s');if(!(S&&S.tok)){var sa=siteGet();if(sa)S={tok:sa.tok,rt:sa.rt,site:1}}if(S&&S.tok)start();else show('login');
 })();
 </script>
 </body>
