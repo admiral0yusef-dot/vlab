@@ -433,5 +433,5 @@ html,body{margin:0;height:100%;background:#0b1029;overflow:hidden;font-family:Ca
   window.BG = { S: S, LEVELS: LEVELS, load: load, stroke: function (pts) { S.stroke = pts.slice(0, 1); for (var i = 1; i < pts.length; i++) { var l = S.stroke[S.stroke.length - 1]; S.ink += Math.hypot(pts[i][0] - l[0], pts[i][1] - l[1]); S.stroke.push(pts[i]); } endStroke(); }, step: step };
 })();
 </script>
-</body>
+<script src="/vstat.js" defer></script></body>
 </html>
