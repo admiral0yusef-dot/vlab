@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' blob: data:; style-src 'unsafe-inline' blob: data:; img-src blob: data:; media-src blob: data:; font-src blob: data:; worker-src blob: data:; connect-src blob: data:; frame-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>محاكاة علمية — VLab</title>
+<style>html,body{margin:0;height:100%;background:#1e1e1e;color:#e5e7eb;font:15px/1.7 Tahoma,system-ui,sans-serif}.m{display:grid;place-items:center;height:100%;text-align:center;padding:16px;box-sizing:border-box}</style>
+</head>
+<body>
+<div class="m" id="m">⏳ تجهيز المحاكاة…</div>
+<script>
+/* صندوق معزول لمحاكيات PhET المضمّنة في VLab.
+   - تُحمَّل هذه الصفحة داخل iframe بخاصية sandbox دون allow-same-origin، فأصلها «null»:
+     لا ترى تخزين الموقع (localStorage/الكوكيز) ولا تصل إلى الصفحة الأم.
+   - سياسة CSP الخاصة بها تسمح بـ eval (تحتاجه المحاكيات) وتمنع أي اتصال شبكي، فلا يمكن تسريب شيء.
+   - إن فُتحت خارج الصندوق (أصلها ليس null) ترفض العمل. */
+(function () {
+  var isolated = false;
+  try { isolated = window.origin === 'null' && window.parent !== window; } catch (e) {}
+  if (!isolated) { document.getElementById('m').textContent = 'هذه الصفحة تعمل داخل المختبر الافتراضي فقط.'; return; }
+  var started = false;
+  var SHIM = '<script>(function(){var P=window.parent;function post(t,x){try{P.postMessage({type:t,msg:String(x||"").slice(0,300)},"*")}catch(e){}}' +
+    'function mem(){var o={};return{getItem:function(k){return Object.prototype.hasOwnProperty.call(o,k)?o[k]:null},setItem:function(k,v){o[k]=String(v)},removeItem:function(k){delete o[k]},clear:function(){o={}},key:function(i){return Object.keys(o)[i]||null},get length(){return Object.keys(o).length}}}' +
+    '["localStorage","sessionStorage"].forEach(function(n){var ok=false;try{ok=!!window[n]}catch(e){}if(!ok){try{Object.defineProperty(window,n,{value:mem(),configurable:true})}catch(e){}}});' +
+    'addEventListener("error",function(e){post("vlab-phet-error",e.message)});addEventListener("unhandledrejection",function(e){post("vlab-phet-error",e.reason&&e.reason.message||e.reason)});' +
+    'var n=0,t=setInterval(function(){n++;var j=window.phet&&window.phet.joist,s=j&&j.sim,c=s&&s.isConstructionCompleteProperty;' +
+    'if((c&&c.value===true)||(j&&j.launchCalled&&!document.getElementById("splash-container"))){clearInterval(t);post("vlab-phet-started")}else if(n>120){clearInterval(t)}},250);' +
+    'addEventListener("load",function(){post("vlab-phet-loaded")});})()<\/script>';
+  addEventListener('message', function (e) {
+    if (started || e.source !== window.parent) return;
+    var d = e.data;
+    if (!d || d.type !== 'vlab-phet-html' || typeof d.html !== 'string') return;
+    started = true;
+    var h = d.html;
+    h = /<head[^>]*>/i.test(h) ? h.replace(/<head[^>]*>/i, function (m) { return m + SHIM; }) : SHIM + h;
+    document.open(); document.write(h); document.close();
+  });
+  window.parent.postMessage({ type: 'vlab-phet-ready' }, '*');
+})();
+</script>
+</body>
+</html>
