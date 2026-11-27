@@ -63,7 +63,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:4px 6px;b
     <h1>🔐 تفعيل لوحة الإحصائيات</h1>
     <p class="msg">لا يوجد مدير للإحصائيات بعد. اضغط الزر ليصبح حسابك هو المدير الوحيد الذي يرى هذه اللوحة. تتم هذه الخطوة مرة واحدة فقط.</p>
     <button class="btn" id="cl">اجعل حسابي مدير الإحصائيات</button>
-    <button class="btn g" data-out>تسجيل الخروج</button>
+    <button class="btn g" id="other">الدخول بحساب آخر</button>
     <p class="msg" id="cm"></p>
   </section>
 
@@ -121,10 +121,11 @@ $('go').onclick=function(){var m=$('lm');m.className='msg';m.textContent='جار
   .catch(function(e){m.className='msg e';m.textContent=e.message})};
 $('pw').addEventListener('keydown',function(e){if(e.key==='Enter')$('go').click()});
 
+$('other').onclick=function(){S=null;ss('vl_stats_s',null);ss('vl_no_site',1);$('cm').textContent='';show('login')};
 $('cl').onclick=function(){var m=$('cm');m.className='msg';m.textContent='…';
   api('/rest/v1/rpc/vl_claim_admin').then(function(r){
     if(r==='ok'){start();return}
-    m.className='msg e';m.textContent={taken:'تم تعيين مدير آخر مسبقاً. تواصل مع صاحب الموقع.',student:'حسابات الطلاب لا يمكنها إدارة الإحصائيات.',login:'سجّل الدخول أولاً.'}[r]||r})
+    m.className='msg e';m.textContent={taken:'هذا الحساب ليس حساب المدير. اضغط «الدخول بحساب آخر» وسجّل الدخول بحساب المدير.',student:'حسابات الطلاب لا يمكنها إدارة الإحصائيات.',login:'سجّل الدخول أولاً.'}[r]||r})
   .catch(function(e){m.className='msg e';m.textContent=e.message})};
 
 function start(){
@@ -180,7 +181,7 @@ function hours(rows){var el=$('hours'),m={};rows.forEach(function(r){m[r.h]=r.n}
   var W=480,Hh=150,B=20,bw=W/24,s='';for(var h=0;h<24;h++){var v=m[h]||0,bh=(Hh-B-6)*v/mx,xx=W-(h+1)*bw+2;s+='<rect x="'+xx+'" y="'+(Hh-B-bh)+'" width="'+(bw-4)+'" height="'+Math.max(v?2:0,bh)+'" rx="3" fill="var(--acc)"><title>الساعة '+h+':00 — '+v+' زيارة</title></rect>';if(h%3===0)s+='<text x="'+(xx+bw/2-2)+'" y="'+(Hh-5)+'" font-size="10" fill="var(--mut)" text-anchor="middle">'+h+'</text>'}
   el.innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" role="img" aria-label="الزيارات حسب الساعة">'+s+'</svg>'}
 
-S=ss('vl_stats_s');if(!(S&&S.tok)){var sa=siteGet();if(sa)S={tok:sa.tok,rt:sa.rt,site:1}}if(S&&S.tok)start();else show('login');
+S=ss('vl_stats_s');if(!(S&&S.tok)&&!ss('vl_no_site')){var sa=siteGet();if(sa)S={tok:sa.tok,rt:sa.rt,site:1}}if(S&&S.tok)start();else show('login');
 })();
 </script>
 </body>
