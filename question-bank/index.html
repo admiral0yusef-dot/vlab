@@ -3336,6 +3336,7 @@ window.YQ_CLOUD={url:'https://uxjsbkopkizixvlzqmpk.supabase.co',key:'sb_publisha
 #vaFab,#vaPanel{display:none!important}
 #fab{position:fixed}#fab .va-badge{position:absolute;top:-6px;left:-6px;min-width:20px;height:20px;border-radius:10px;background:#ff3b30;color:#fff;font:800 11px/20px inherit;font-style:normal;text-align:center;padding:0 5px}
 #chat .va-m{white-space:pre-wrap;word-wrap:break-word}
+#chat .va-m.a{background:#eef2ff;border:1px solid #c7d2fe;color:#1e293b}
 #chat .va-step{color:#4338ca;background:rgba(99,102,241,.06);border-color:rgba(99,102,241,.35)}
 #chat .va-step b{color:#3730a3}#chat .va-step em{color:#64748b}#chat .va-step .ic{background:rgba(99,102,241,.14)}#chat .va-step.ok .ic{background:rgba(16,185,129,.18)}
 #chat .va-card{background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.35);color:inherit}
@@ -3421,14 +3422,25 @@ var TOOLS={
       setTimeout(function(){fin(true)},6*60*1000);
     });
   },
-  explain_concept:function(a){var t='';try{t=window.yqAskScience?String(yqAskScience(a.question)||''):''}catch(e){}t=t.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();return t?{source:'قاعدة معرفة المنهاج الأردني',text:t.slice(0,1400)}:{found:false,note:'لا يوجد شرح في قاعدة المعرفة'}},
+  explain_concept:function(a){var q=String(a.question||''),t='';try{t=window.yqAskScience?String(yqAskScience(q)||''):''}catch(e){}t=t.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+   /* إن كان جواب القاعدة قصيراً (رقم أو كلمة) نبني شرحاً حقيقياً: السؤال + الإجابة الصحيحة + السبب من شرح التجربة المطابقة */
+   if(t.length>=90&&!a.correct)return{source:'قاعدة معرفة المنهاج الأردني',text:t.slice(0,1400)};
+   return cat().then(function(C){var g=curGrade(a),qt=qtoks(q.split(' — ')[0]+' '+q),best=null,bs=0;C.forEach(function(e){if(g&&e.g!==g)return;var sc=score(qt,e);if(sc>bs){bs=sc;best=e}});
+     var parts=[],head=q.split(' — ')[0];if(a.correct)parts.push('الإجابة الصحيحة: '+a.correct+'.');else if(t)parts.push('الجواب: '+t+'.');
+     if(best&&bs>=4&&best.r)parts.push('ليش؟ '+best.r);if(best&&bs>=4)parts.push('جرّب بنفسك في تجربة «'+best.n+'» وغيّر المتغيرات لتشوف السبب.');
+     if(!parts.length)return t?{source:'قاعدة معرفة المنهاج الأردني',text:t}:{found:false,note:'لا يوجد شرح في قاعدة المعرفة'};
+     return{source:best&&bs>=4?'شرح تجربة «'+best.n+'» في المختبر':'قاعدة معرفة المنهاج الأردني',text:((head&&head!==q?'«'+head+'»: ':'')+parts.join(' ')).slice(0,1400),experiment:best&&bs>=4?{sig:best.s,name:best.n}:undefined}})},
   give_quiz:function(a){return cat().then(function(){return quiz(a)})}
 };
 function quiz(a){
   {
     var g=curGrade(a);if(!g)return{error:'grade_unknown',note:'اسأل الطالب عن صفه أولاً'};
     var pu=pickUnit(g,a.topic);if(!pu||!pu.u)return{error:'no_bank',note:'لا يوجد بنك أسئلة لهذا الصف'};
-    var P=shuf(poolFor(g,pu.u)),n=Math.max(2,Math.min(5,+a.n||3)),Q=P.slice(0,n);if(!Q.length)return{error:'no_questions'};
+    var P=shuf(poolFor(g,pu.u)),n=Math.max(2,Math.min(5,+a.n||3));
+    /* نقدّم أسئلة المفهوم الذي ذكره الطالب (عنوان التجربة أولاً ثم الكلمات المفتاحية) على باقي أسئلة الوحدة */
+    var tq=qtoks(a.topic||'').filter(function(w){return w.length>=3&&!/^(مش|فاهم|ليش|ليه|كيف|محلول|سؤال|درس|الوحده|وحده)$/.test(w)}),rank=function(x){var h=nz(x.q.split(' — ')[0]),b=nz(x.q),sc=0;tq.forEach(function(w){if(h.indexOf(w)>=0)sc+=3;else if(b.indexOf(w)>=0)sc+=1});return sc};
+    var R=P.map(function(x){return{x:x,s:rank(x)}}),F=R.filter(function(r){return r.s>=3}).sort(function(a,b){return b.s-a.s}).map(function(r){return r.x}),Q=F.slice(0,n);
+    if(Q.length<n)Q=Q.concat(P.filter(function(x){return Q.indexOf(x)<0}).slice(0,n-Q.length));if(!Q.length)return{error:'no_questions'};var focused=Math.min(F.length,n);
     var label=ulabel(pu.u);
     return new Promise(function(res){
       var c=card('📝 اختبار قصير: '+label),i=0,ok=0,missed=[];
@@ -3438,7 +3450,7 @@ function quiz(a){
           try{window.YQ_SFX&&YQ_SFX[good?'ok':'no']&&YQ_SFX[good?'ok':'no']()}catch(e){}
           setTimeout(function(){c._lock=0;i++;if(i<Q.length)show();else end()},good?650:1300)}});scrollDown()}
       function end(){var m=mem.mastery[label]||(mem.mastery[label]={n:0,ok:0});m.n+=Q.length;m.ok+=ok;mem.log.unshift({t:Date.now(),topic:label,score:ok,total:Q.length});mem.log.length=Math.min(mem.log.length,50);save();
-        c.innerHTML='<h5>✅ النتيجة: '+ok+' من '+Q.length+'</h5><div class="va-bar"><i style="width:'+(ok/Q.length*100)+'%"></i></div>';res({unit:label,score:ok,total:Q.length,missed:missed,mastery_now:Math.round(pm(label)*100)})}
+        c.innerHTML='<h5>✅ النتيجة: '+ok+' من '+Q.length+'</h5><div class="va-bar"><i style="width:'+(ok/Q.length*100)+'%"></i></div>';res({unit:label,score:ok,total:Q.length,focused_on_topic:focused,missed:missed,mastery_now:Math.round(pm(label)*100)})}
       show();
     });
   }
@@ -3555,10 +3567,10 @@ async function localPlan(text){
   var Q=await runTool('give_quiz',{topic:topic,n:3});
   if(Q.error){msg('ما لقيت بنك أسئلة مناسب لهذا الموضوع، جرّب تكتب اسم الوحدة.');return}
   if(Q.score<Q.total){
-    if(!learn){var E2=await runTool('explain_concept',{question:Q.missed[0]?Q.missed[0].question:Q.unit});if(E2.text)msg('خلينا نوضّح النقطة اللي غلطت فيها: '+E2.text.slice(0,420))}
+    if(!learn){var E2=await runTool('explain_concept',Q.missed[0]?{question:Q.missed[0].question,correct:Q.missed[0].correct}:{question:topic});if(E2.text)msg('خلينا نوضّح النقطة اللي غلطت فيها: '+E2.text.slice(0,420))}
     var X=await runTool('find_experiments',{query:Q.unit+' '+topic,grade:g});
     if(X.results&&X.results[0]){var e=X.results[0];await runTool('open_experiment',{sig:e.sig,task:'غيّر «'+((e.variables||[])[0]||'المتغير الأول')+'» تدريجياً ولاحظ كيف تتغير النتيجة، ثم اكتب ملاحظتك.'})}
-    var Q2=await runTool('give_quiz',{topic:Q.unit,n:2});var ok2=!Q2.error;
+    var Q2=await runTool('give_quiz',{topic:topic,n:2});var ok2=!Q2.error;
     await runTool('schedule_review',{topic:Q.unit,days:ok2&&Q2.score===Q2.total?3:1});
     msg('بدأنا بـ '+Q.score+'/'+Q.total+(ok2?(' وبعد التجربة صار '+Q2.score+'/'+Q2.total):'')+'. جدولتلك مراجعة لـ «'+Q.unit+'» حتى نثبّت الفكرة.');
   }else{await runTool('schedule_review',{topic:Q.unit,days:5});msg('أحسنت! '+Q.score+'/'+Q.total+' في «'+Q.unit+'» 👏 جدولتلك مراجعة خفيفة بعد 5 أيام.')}
