@@ -1872,6 +1872,14 @@ const sp=document.createElement('div');sp.className='yqSpacer';lab.appendChild(s
 #lab #yqStage .yqMenu button{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border:0;border-radius:10px;background:#ffffff10;color:#fff;font:inherit;font-size:14px;font-weight:800;text-align:start;cursor:pointer}
 #lab #yqStage .yqMenu button:active{background:#ffffff26}
 #lab #yqStage .yqB.yqFoc{background:linear-gradient(135deg,#10b981,#0ea5e9);border:0}
+#lab #yqStage .yqB.yqAgt{background:linear-gradient(135deg,#f59e0b,#ef4444);border:0;color:#fff;font-weight:800}
+#lab #yqStage .yqB.yqAgt span{display:inline!important}
+#lab #yqStage .yqAgtTip{position:absolute;top:52px;inset-inline-start:50%;transform:translateX(50%);z-index:9;max-width:300px;max-width:min(300px,86vw);padding:9px 12px;border-radius:12px;background:#fff7ed;color:#7c2d12;border:1px solid #fdba74;box-shadow:0 10px 26px #0006;font-size:13px;font-weight:700;line-height:1.6;text-align:center;pointer-events:none;transition:opacity .4s}
+#lab #yqStage .yqB.yqAgt .yqAgtS{display:none!important}
+#lab #yqStage .yqMenu .yqMenuQz{display:none}
+@media (max-width:400px){#lab #yqStage .yqBar>[data-a=quiz]{display:none!important}#lab #yqStage .yqMenu .yqMenuQz{display:flex}}
+@media (max-width:600px){#lab #yqStage .yqB.yqAgt span{font-size:12px}#lab #yqStage .yqTitle{min-width:0}}
+@media (max-width:440px){#lab #yqStage .yqB.yqAgt .yqAgtL{display:none!important}#lab #yqStage .yqB.yqAgt .yqAgtS{display:inline!important}#lab #yqStage .yqBar{gap:4px;padding:6px 5px}#lab #yqStage .yqB{min-width:36px}}
 #lab #yqStage.yqFocus .yqB.yqFoc{background:#ef4444}
 #lab #yqStage.yqFocus .yqB.yqFoc span{display:inline!important}
 #lab #yqStage.yqFocus{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:0!important;inset:0!important;z-index:2147482000!important;height:100%!important;height:100vh!important;height:100dvh!important;max-height:none!important;min-height:0!important;margin:0!important;border-radius:0!important;border:0!important;padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0)}
@@ -1932,7 +1940,7 @@ const foc=document.createElement('button');foc.type='button';foc.className='yqB 
 const dockBtn=bar.querySelector('[data-a=dock]');bar.insertBefore(foc,dockBtn?dockBtn.nextSibling:null);
 const more=document.createElement('button');more.type='button';more.className='yqB yqMore';more.title='أدوات أخرى';more.setAttribute('aria-haspopup','true');more.setAttribute('aria-expanded','false');more.textContent='⋯';bar.appendChild(more);
 const menu=document.createElement('div');menu.className='yqMenu';menu.setAttribute('role','menu');
-[['ask','🤖','اسأل المساعد'],['sheet','🖨','ورقة النتائج'],['snd','🔊','الصوت'],['fs','⛶','ملء الشاشة']].forEach(x=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.dataset.go=x[0];b.innerHTML='<span>'+x[1]+'</span><span>'+x[2]+'</span>';menu.appendChild(b)});
+[['quiz','📝','اختبر نفسك'],['ask','🤖','اسأل المساعد'],['sheet','🖨','ورقة النتائج'],['snd','🔊','الصوت'],['fs','⛶','ملء الشاشة']].forEach(x=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.dataset.go=x[0];if(x[0]==='quiz')b.className='yqMenuQz';b.innerHTML='<span>'+x[1]+'</span><span>'+x[2]+'</span>';menu.appendChild(b)});
 bar.appendChild(menu);
 const closeMenu=()=>{menu.classList.remove('open');more.setAttribute('aria-expanded','false')};
 more.addEventListener('click',e=>{e.stopPropagation();const o=!menu.classList.contains('open');menu.classList.toggle('open',o);more.setAttribute('aria-expanded',String(o))});
@@ -1971,6 +1979,22 @@ function togP(lb){const pe=lb.closest('#yqExperimentPurpose');if(!pe||!pe.classL
 document.addEventListener('click',e=>{const lb=e.target.closest&&e.target.closest('#yqExperimentPurpose .yq-purpose-label');if(lb)togP(lb)});
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('#yqExperimentPurpose .yq-purpose-label')){e.preventDefault();togP(e.target)}});
 const lab=$('lab');if(lab)new MutationObserver(()=>{clearTimeout(purpose._t);purpose._t=setTimeout(purpose,20)}).observe(lab,{childList:true,subtree:true});purpose();
+/* زر «🎯 ساعدني أفهم»: يشغّل وكيل المختبر على درس التجربة المفتوحة مباشرة */
+const agt=document.createElement('button');agt.type='button';agt.className='yqB yqAgt';agt.title='الوكيل يشخّص فهمك لهذا الدرس، يشرح، ويختبرك';agt.innerHTML='🎯<span class="yqAgtL">ساعدني أفهم</span><span class="yqAgtS">افهم</span>';
+bar.insertBefore(agt,foc);
+agt.addEventListener('click',e=>{e.stopPropagation();closeMenu();exitFocus();
+ const V=window.VAgent;if(!V||typeof V.turn!=='function')return;
+ let g=0,n='';try{g=+cur[0]||0;n=String(cur[2]||'')}catch(x){}if(!n){const t=$('yqTitle');n=t?t.textContent.trim():''}
+ if(g){try{V.mem().grade=g;localStorage.setItem('yq_ai_grade',String(g));const sel=$('yqAIgrade');if(sel&&sel.value!==String(g)){sel.value=String(g);sel.dispatchEvent(new Event('change',{bubbles:true}))}}catch(x){}}
+ const ch=$('chat');if(ch&&!ch.classList.contains('open')){if(typeof window.tg==='function')window.tg();else ch.classList.add('open')}
+ try{window.vlTrack&&vlTrack('agent',{label:'exp_button',sig:n})}catch(x){}
+ setTimeout(()=>V.turn('حضّرني لاختبار على درس «'+n+'» وعلّمني اللي ما فهمته'),250)});
+/* تلميح أول مرة: تعريف الطالب بالزر */
+try{if(!localStorage.getItem('yq_agt_tip')){const tip=document.createElement('div');tip.className='yqAgtTip';tip.textContent='🎯 جديد: اضغط «ساعدني أفهم» والوكيل بيختبر فهمك لهالدرس، بيشرحلك اللي غلطت فيه، وبيعطيك تجربة تطبيقية';bar.appendChild(tip);
+ const hide=()=>{tip.style.opacity='0';setTimeout(()=>tip.remove(),500);try{localStorage.setItem('yq_agt_tip','1')}catch(x){}};
+ const show=()=>{if(document.body.classList.contains('yqInLab')){setTimeout(hide,7000);return true}return false};
+ if(!show()){const mo=new MutationObserver(()=>{if(show())mo.disconnect()});mo.observe(document.body,{attributes:true,attributeFilter:['class']})}
+ agt.addEventListener('click',hide,{once:true})}}catch(x){}
 updFoc();window.yqStage.enterFocus=enterFocus;window.yqStage.exitFocus=exitFocus;
 })();</script>
 <style id="yq-qb-css">
